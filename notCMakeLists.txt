@@ -1,0 +1,147 @@
+cmake_minimum_required(VERSION 3.10)
+
+#===============================================================================
+# Project Definition and Global Configuration
+#===============================================================================
+project(GameEngine VERSION 1.0 LANGUAGES C CXX)
+set(CMAKE_FIND_PACKAGE_PREFER_CONFIG ON)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED "NO" CACHE INTERNAL "Disable Xcode Code Signing")
+set(BUILD_SHARED_LIBS OFF)
+
+#===============================================================================
+# Locate SDL Packages in Third-Party Directories
+# (we have our custom SDL2Config.cmake, etc. under these folders)
+#===============================================================================
+set(CMAKE_PREFIX_PATH
+  ${CMAKE_PREFIX_PATH}
+  "${PROJECT_SOURCE_DIR}/src/thirdParty/SDL2"
+  "${PROJECT_SOURCE_DIR}/src/thirdParty/SDL_image"
+  "${PROJECT_SOURCE_DIR}/src/thirdParty/SDL2_mixer"
+  "${PROJECT_SOURCE_DIR}/src/thirdParty/SDL2_ttf"
+)
+find_package(SDL2       CONFIG REQUIRED)
+find_package(SDL2_image CONFIG REQUIRED)
+find_package(SDL2_mixer CONFIG REQUIRED)
+find_package(SDL2_ttf   CONFIG REQUIRED)
+
+#===============================================================================
+# RapidJSON (header‑only)
+#===============================================================================
+add_subdirectory("${PROJECT_SOURCE_DIR}/src/thirdParty/rapidjson")
+
+#===============================================================================
+# First‑Party Sources
+#===============================================================================
+file(GLOB FIRST_PARTY
+  ${PROJECT_SOURCE_DIR}/src/firstParty/*.cpp
+  ${PROJECT_SOURCE_DIR}/src/firstParty/*.hpp
+)
+add_executable(${PROJECT_NAME} ${FIRST_PARTY})
+
+target_include_directories(${PROJECT_NAME} PRIVATE
+  # your own headers
+  ${PROJECT_SOURCE_DIR}/src/firstParty
+  # header-only libs
+  ${PROJECT_SOURCE_DIR}/src/thirdParty/glm
+  ${PROJECT_SOURCE_DIR}/src/thirdParty/LuaBridge
+  ${PROJECT_SOURCE_DIR}/src/thirdParty/rapidjson/include
+  # RAW C SDL2 headers live right in this folder
+  ${PROJECT_SOURCE_DIR}/src/thirdParty/SDL2
+)
+
+#===============================================================================
+# Lua Library Setup
+#===============================================================================
+file(GLOB LUA_SRC ${PROJECT_SOURCE_DIR}/src/thirdParty/lua/*.c)
+add_library(${PROJECT_NAME}_lua STATIC ${LUA_SRC})
+target_include_directories(${PROJECT_NAME}_lua PUBLIC ${PROJECT_SOURCE_DIR}/src/thirdParty/lua)
+
+#===============================================================================
+# Header‑only Libraries
+#===============================================================================
+add_library(LuaBridge INTERFACE)
+target_include_directories(LuaBridge INTERFACE ${PROJECT_SOURCE_DIR}/src/thirdParty/LuaBridge)
+
+add_library(glm INTERFACE)
+target_include_directories(glm INTERFACE ${PROJECT_SOURCE_DIR}/src/thirdParty/glm)
+
+add_library(rapidjson INTERFACE)
+target_include_directories(rapidjson INTERFACE ${PROJECT_SOURCE_DIR}/src/thirdParty/rapidjson/include)
+
+#===============================================================================
+# Compile Features
+#===============================================================================
+target_compile_features(${PROJECT_NAME}     PRIVATE cxx_std_20 c_std_17)
+target_compile_features(${PROJECT_NAME}_lua PRIVATE cxx_std_20 c_std_17)
+
+#===============================================================================
+# Link header‑only & Lua
+#===============================================================================
+target_link_libraries(${PROJECT_NAME}
+  PRIVATE
+    ${PROJECT_NAME}_lua
+    LuaBridge
+    glm
+    rapidjson
+)
+
+#===============================================================================
+# Platform‑Specific SDL Linking & Bundling
+#===============================================================================
+if(APPLE)
+  # also let you do #include <SDL.h> from the .framework if desired
+  target_include_directories(${PROJECT_NAME} PRIVATE
+    "${PROJECT_SOURCE_DIR}/src/thirdParty/SDL2/lib/SDL2.framework/Headers"
+  )
+  # tell linker where to find the framework
+  target_link_options(${PROJECT_NAME} PRIVATE
+    "-F${PROJECT_SOURCE_DIR}/src/thirdParty/SDL2/lib"
+  )
+  # link it
+  target_link_libraries(${PROJECT_NAME} PRIVATE
+    "-framework" "SDL2"
+  )
+  # bundle settings
+  set_target_properties(${PROJECT_NAME} PROPERTIES
+    MACOSX_BUNDLE                TRUE
+    BUILD_WITH_INSTALL_RPATH     ON
+    INSTALL_RPATH                "@executable_path/../Frameworks"
+  )
+  # copy & codesign into .app
+  set(MY_APP_CONTENTS "$<TARGET_BUNDLE_CONTENT_DIR:${PROJECT_NAME}>")
+  add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${MY_APP_CONTENTS}/Frameworks"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+      "${PROJECT_SOURCE_DIR}/src/thirdParty/SDL2/lib/SDL2.framework"
+      "${MY_APP_CONTENTS}/Frameworks/SDL2.framework"
+    COMMAND codesign --force --deep --sign "-" "${MY_APP_CONTENTS}/Frameworks/SDL2.framework"
+  )
+else()
+  # non-Apple: use import targets
+  target_link_libraries(${PROJECT_NAME} PRIVATE
+    SDL2::SDL2
+    SDL2::SDL2main
+    SDL2_image::SDL2_image
+    SDL2_mixer::SDL2_mixer
+    SDL2_ttf::SDL2_ttf
+  )
+endif()
+
+#===============================================================================
+# Post‑Build: Copy Resources
+#===============================================================================
+if(APPLE)
+  add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+      "${PROJECT_SOURCE_DIR}/resources"
+      "$<TARGET_FILE_DIR:${PROJECT_NAME}>/../Resources/resources"
+  )
+else()
+  add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+      "${PROJECT_SOURCE_DIR}/resources"
+      "$<TARGET_FILE_DIR:${PROJECT_NAME}>/resources"
+  )
+endif()
