@@ -117,28 +117,11 @@ class Engine {
         return &textureCache;
     }
 
-    static luabridge::LuaRef Find(const std::string &name) {
-        for (auto &actor : masterActorList) {
-            if (actor.getName() == name) {
-                // need to return the refreence to the  actor
-                return luabridge::LuaRef(ComponentManager::getLuaState(), &actor);
-            }
-        }
-        return luabridge::LuaRef(ComponentManager::getLuaState());
-    }
+    static luabridge::LuaRef Find(const std::string &name);
 
-    static luabridge::LuaRef FindAll(const std::string &name) {
-        luabridge::LuaRef resultTable = luabridge::newTable(ComponentManager::getLuaState());
-        int               index       = 1;
+    static luabridge::LuaRef FindAll(const std::string &name);
 
-        for (auto &actor : masterActorList) {
-            if (actor.getName() == name) {
-                resultTable[index] = luabridge::LuaRef(ComponentManager::getLuaState(), &actor);
-                index++;
-            }
-        }
-        return resultTable;
-    }
+    inline static std::vector<Actor> masterActorList;
 
   private:
     inline static const int UNIT = 100;
@@ -178,7 +161,7 @@ class Engine {
 
     inline static bool findActorInVector(std::vector<Actor *> actors, Actor *actor);
 
-    inline static std::vector<Actor> masterActorList;
+    // inline static std::vector<Actor> masterActorList;
 
     inline static int introImgIndex  = 0;
     inline static int introTextIndex = 0;

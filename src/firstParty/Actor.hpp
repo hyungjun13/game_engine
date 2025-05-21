@@ -12,8 +12,7 @@
 
 #include "LuaBridge.h"
 
-#include "ComponentManager.hpp"
-//
+class ComponentManager; //
 // #include "Engine.hpp"
 
 class Actor {
@@ -117,66 +116,13 @@ class Actor {
         (*component)["actor"] = this;
     }
 
-    luabridge::LuaRef getComponentByKey(std::string key) { //
-        if (components.find(key) != components.end()) {
-            return *(components[key]);
-        } else {
-            return luabridge::LuaRef(ComponentManager::getLuaState());
-        }
-    }
+    luabridge::LuaRef getComponentByKey(std::string key);
 
-    luabridge::LuaRef GetComponent(std::string typeName) {
-        std::vector<std::string> matchingKeys;
-        for (const auto &pair : components) {
-            // Check if the component's "type" field equals typeName.
-            if (((*pair.second)["type"]).cast<std::string>() == typeName) {
-                matchingKeys.push_back(pair.first);
-            }
-        }
+    luabridge::LuaRef GetComponent(std::string typeName);
 
-        // If no matching components found, return nil.
-        if (matchingKeys.empty()) {
-            return luabridge::LuaRef(ComponentManager::getLuaState());
-        }
+    luabridge::LuaRef GetComponents(std::string typeName);
 
-        // Sort the keys lexicographically.
-        std::sort(matchingKeys.begin(), matchingKeys.end());
-
-        // Return the component corresponding to the lexicographically smallest key.
-        return *(components.at(matchingKeys[0]));
-    }
-
-    luabridge::LuaRef GetComponents(std::string typeName) {
-        // Get the Lua state (assumes ComponentManager::getLuaState() returns it)
-        lua_State *L = ComponentManager::getLuaState();
-        // Create a new table
-        luabridge::LuaRef        resultTable = luabridge::newTable(L);
-        std::vector<std::string> matchingKeys;
-
-        // Collect keys for components with a matching "type" field .
-        for (const auto &pair : components) {
-            // Make sure the "type" field exists and cast it to string.
-            // This works if you explicitly set instance["type"] when creating the component.
-            if (((*pair.second)["type"]).cast<std::string>() == typeName) {
-                matchingKeys.push_back(pair.first);
-            }
-        }
-
-        // Sort the keys lexicographically.
-        std::sort(matchingKeys.begin(), matchingKeys.end());
-
-        // Insert each matching component into the Lua table with Lua indexing (starting at 1).
-        int index = 1;
-        for (const auto &key : matchingKeys) {
-            resultTable[index] = *components[key];
-            index++;
-        }
-
-        // If no components matched, the table will be empty.
-        return resultTable;
-    }
-
-    luabridge::LuaRef addComponent(std::string type_name);
+    luabridge::LuaRef AddComponent(std::string type_name);
 
   private:
     int                id                         = -1;

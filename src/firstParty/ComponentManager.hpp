@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include "Actor.hpp"
 #include "LuaBridge.h"
 
 // #include "SceneLoader.hpp"
@@ -20,6 +21,12 @@ struct ComponentComparator {
     bool operator()(const ComponentOnStartEntry &a, const ComponentOnStartEntry &b) const {
         return a.key > b.key;
     }
+};
+
+struct PendingComponent {
+    Actor            *actor;
+    std::string       key;
+    luabridge::LuaRef instance;
 };
 
 class ComponentManager {
@@ -64,7 +71,7 @@ class ComponentManager {
 
         std::replace(error_message.begin(), error_message.end(), '\\', '/');
 
-        std::cout << "\033[31m" << actor_name << ": " << error_message << "\033[0m" << std::endl;
+        std::cout << "\033[31m" << actor_name << " : " << error_message << "\033[0m" << std::endl;
     }
 
     static void sortQueues() {
@@ -88,6 +95,11 @@ class ComponentManager {
 
     static luabridge::LuaRef GetComponentType(std::string typeName);
 
+    static void scheduleRuntimeComponent(Actor            *a,
+                                         std::string       key,
+                                         luabridge::LuaRef inst);
+    static void flushPending(); // call at start of next frame
+
   private:
     static void InitializeState();
     static void InitializeFunctions();
@@ -100,6 +112,8 @@ class ComponentManager {
 
     static inline std::vector<std::vector<std::shared_ptr<luabridge::LuaRef>>> onUpdateQueue; // queue[actor][component]
     static inline std::vector<std::vector<std::shared_ptr<luabridge::LuaRef>>> onLateUpdateQueue;
+
+    static inline std::vector<PendingComponent> pendingAdds;
 
     inline static lua_State *L;
 };

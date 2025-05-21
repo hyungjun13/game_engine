@@ -97,6 +97,8 @@ void Engine::Update() {
         running = false;
     }
 
+    ComponentManager::flushPending();
+
     currentFrame = Helper::GetFrameNumber();
 
     if (currentFrame == 0) {
@@ -495,7 +497,7 @@ SDL_Texture *Engine::getTextTexture(const std::string &text, int fontSize, const
 
     auto it = textTextureCache.find(key);
     if (it != textTextureCache.end()) {
-        return it->second;
+        return it->second; //
     }
 
     // Not in cache, so render it.
@@ -637,4 +639,27 @@ void Engine::setPlayerSpeed(float speed) {
 
 float Engine::getPlayerSpeed() {
     return playerSpeed;
+}
+
+luabridge::LuaRef Engine::Find(const std::string &name) {
+    for (auto &actor : masterActorList) {
+        if (actor.getName() == name) {
+            // need to return the refreence to the  actor
+            return luabridge::LuaRef(ComponentManager::getLuaState(), &actor);
+        }
+    }
+    return luabridge::LuaRef(ComponentManager::getLuaState());
+}
+
+luabridge::LuaRef Engine::FindAll(const std::string &name) {
+    luabridge::LuaRef resultTable = luabridge::newTable(ComponentManager::getLuaState());
+    int               index       = 1;
+
+    for (auto &actor : masterActorList) {
+        if (actor.getName() == name) {
+            resultTable[index] = luabridge::LuaRef(ComponentManager::getLuaState(), &actor);
+            index++;
+        }
+    }
+    return resultTable;
 }

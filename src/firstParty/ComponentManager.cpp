@@ -41,6 +41,7 @@ void ComponentManager::InitializeFunctions() {
         .addFunction("GetComponentByKey", &Actor::getComponentByKey)
         .addFunction("GetComponent", &Actor::GetComponent)
         .addFunction("GetComponents", &Actor::GetComponents)
+        .addFunction("AddComponent", &Actor::AddComponent)
         .endClass();
 
     luabridge::getGlobalNamespace(L)
@@ -101,7 +102,7 @@ void ComponentManager::InitializeComponents() {
 }
 
 int ComponentManager::DebugLog(lua_State *L) {
-    const char *message = luaL_checkstring(L, 1);
+    const char *message = luaL_optstring(L, 1, "");
     std::cout << message << std::endl;
     return 0;
 }
@@ -139,7 +140,9 @@ void ComponentManager::ProcessOnStart() {
                     entry.componentFunction["OnStart"](entry.componentFunction);
                 } catch (const luabridge::LuaException &e) {
                     // Report the error.
-                    ReportError(entry.componentFunction["actor"]["name"].cast<std::string>(), e);
+                    luabridge::LuaRef actorRef = entry.componentFunction["actor"];
+                    Actor            *actorPtr = actorRef.cast<Actor *>();
+                    ReportError(actorPtr->getName(), e);
                 }
             }
         }
@@ -175,10 +178,12 @@ void ComponentManager::ProcessOnUpdate() {
 
                 } catch (const luabridge::LuaException &e) { //
                     // Report the error.
-                    ReportError((*instance)["actor"]["name"].cast<std::string>(), e);
+                    luabridge::LuaRef actorRef = (*instance)["actor"];
+                    Actor            *a        = actorRef.cast<Actor *>();
+                    ReportError(a->getName(), e);
                 }
             }
-        }
+        } //
     }
 }
 
@@ -194,8 +199,9 @@ void ComponentManager::ProcessOnLateUpdate() {
                     (*instance)["OnLateUpdate"](*instance);
 
                 } catch (const luabridge::LuaException &e) {
-                    // Report the error.
-                    ReportError((*instance)["actor"]["name"].cast<std::string>(), e);
+                    luabridge::LuaRef actorRef = (*instance)["actor"];
+                    Actor            *a        = actorRef.cast<Actor *>();
+                    ReportError(a->getName(), e);
                 }
             }
         }
@@ -244,4 +250,30 @@ luabridge::LuaRef ComponentManager::GetComponentType(std::string typeName) {
     } else {
         return luabridge::LuaRef(getLuaState());
     }
+}
+
+void ComponentManager::scheduleRuntimeComponent(Actor            *a,
+                                                std::string       key,
+                                                luabridge::LuaRef inst) {
+    pendingAdds.push_back({a, std::move(key), std::move(inst)});
+}
+
+void ComponentManager::flushPending() {
+    for (auto &p : pendingAdds) {
+        // actually insert into the actor’s map
+        p.actor->getComponentsMap()[p.key] = std::make_shared<luabridge::LuaRef>(p.instance);
+        // queue their OnStart/OnUpdate/LateUpdate just like SceneLoader does:
+        if (p.instance["OnStart"].isFunction())
+            ComponentManager::QueueOnStart(
+                p.actor->getId(), p.key, p.instance);
+        if (p.instance["OnUpdate"].isFunction())
+            ComponentManager::QueueOnUpdate(
+                p.actor->getId(),
+                std::make_shared<luabridge::LuaRef>(p.instance));
+        if (p.instance["OnLateUpdate"].isFunction())
+            ComponentManager::QueueOnLateUpdate(
+                p.actor->getId(),
+                std::make_shared<luabridge::LuaRef>(p.instance));
+    }
+    pendingAdds.clear();
 }
