@@ -108,11 +108,9 @@ void EngineUtil::startup() {
     SceneLoader::loadActors(scene_path);
 
     for (auto &actor : SceneLoader::loadedActors) {
-        Actor *actorPtr = actor.get();
-        Engine::addActor(*actorPtr);
+        Engine::addActor(actor);
     }
 
     ImageDB::loadHUD();
-
-    // engine.GameLoop();
 }
+//

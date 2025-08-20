@@ -9,5 +9,4 @@ class SceneLoader {
     inline static std::vector<std::shared_ptr<Actor>> loadedActors;
 
   private:
-    inline static int idCounter = 0;
 };

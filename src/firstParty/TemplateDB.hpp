@@ -9,7 +9,7 @@
 
 class TemplateDB {
   public:
-    void loadTemplate(std::string templateName, Actor &actor);
+    static void loadTemplate(std::string templateName, Actor &actor);
 
   private:
 };

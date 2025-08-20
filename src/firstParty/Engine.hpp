@@ -35,10 +35,12 @@ struct imageDrawRequest {
 
 struct textRequest {
     std::string text;
-    int         fontSize;
-    SDL_Color   color;
     int         x;
     int         y;
+    std::string fontName;
+    int         fontSize;
+    SDL_Color   color;
+    int         alpha;
 };
 
 class Engine {
@@ -55,7 +57,7 @@ class Engine {
 
     // static bool checkNPCmovement(Actor &actor);
 
-    static void addActor(Actor &actor);
+    static void addActor(std::shared_ptr<Actor> actor);
 
     static void        setGameTitle(std::string title);
     static std::string getGameTitle();
@@ -69,11 +71,6 @@ class Engine {
     static int  getClearedColorR();
     static int  getClearedColorG();
     static int  getClearedColorB();
-
-    static void RenderIntro();
-
-    static int  getGameState();
-    static void setGameState(int state);
 
     static void renderImages();
     static void renderActor(Actor &actor);
@@ -93,9 +90,6 @@ class Engine {
     static bool getHasPlayer();
 
     static void renderHUD();
-    static void renderDialogue();
-
-    static void renderOutro(int index);
 
     static void  setZoomFactor(float scale);
     static float getZoomFactor();
@@ -121,10 +115,20 @@ class Engine {
 
     static luabridge::LuaRef FindAll(const std::string &name);
 
-    inline static std::vector<Actor> masterActorList;
+    static inline int idCounter = 0;
+
+    static luabridge::LuaRef Instantiate(const std::string &templateName);
+
+    static void DestroyActor(Actor *actor);
+
+    static void addText(textRequest request) {
+        textDrawQueue.push_back(request);
+    }
 
   private:
     inline static const int UNIT = 100;
+
+    inline static std::vector<std::shared_ptr<Actor>> masterActorList;
 
     inline static bool hasPlayer = false;
 
@@ -141,8 +145,6 @@ class Engine {
     inline static int clear_color_r = 255;
     inline static int clear_color_g = 255;
     inline static int clear_color_b = 255;
-
-    inline static int gameState = 0; // 0 = intro, 1 = game, 2 = game over
 
     inline static glm::vec2 playerPosition = glm::vec2(0.0f, 0.0f);
     inline static int       playerHealth   = 3;
@@ -162,9 +164,6 @@ class Engine {
     inline static bool findActorInVector(std::vector<Actor *> actors, Actor *actor);
 
     // inline static std::vector<Actor> masterActorList;
-
-    inline static int introImgIndex  = 0;
-    inline static int introTextIndex = 0;
 
     inline static std::deque<imageDrawRequest> imageDrawQueue;
     inline static std::deque<imageDrawRequest> imageDrawQueueHUD;
@@ -191,4 +190,12 @@ class Engine {
     inline static float camEaseFactor = 1.0f;
 
     inline static float playerSpeed = 0.02f;
+
+    inline static std::vector<std::shared_ptr<Actor>> pendingActorAdds;
+    static void                                       flushPendingActors();
+
+    inline static std::vector<Actor *> pendingActorDestroys;
+    static void                        flushPendingActorDestroys();
+
+    inline static std::vector<Actor *> renderOrderBuffer;
 };

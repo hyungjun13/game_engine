@@ -24,6 +24,7 @@
 #include "SDL2/SDL.h"
 #include "SDL2_ttf/SDL_ttf.h"
 #include "SceneLoader.hpp"
+#include "TemplateDB.hpp"
 #include "TextDB.hpp"
 #include "glm/glm.hpp"
 
@@ -89,7 +90,7 @@ void Engine::Input() {
         Input::ProcessEvent(e);
     }
 }
-
+//
 void Engine::Update() {
 
     // Check if quit
@@ -97,31 +98,30 @@ void Engine::Update() {
         running = false;
     }
 
+    flushPendingActors();
+
     ComponentManager::flushPending();
 
     currentFrame = Helper::GetFrameNumber();
 
-    if (currentFrame == 0) {
-        ComponentManager::ProcessOnStart();
-    }
+    ComponentManager::ProcessOnStart();
 
-    // Move Actors (only player for now )
     updateActors();
 }
 
 void Engine::LateUpdate() {
     ComponentManager::ProcessOnLateUpdate();
+    flushPendingActorDestroys();
 }
 
 void Engine::Render() {
-    // Clear the renderer.
+    // Clear the renderer
     SDL_SetRenderDrawColor(Renderer::getRenderer(),
                            Engine::getClearedColorR(),
                            Engine::getClearedColorG(),
                            Engine::getClearedColorB(), 255);
     SDL_RenderClear(Renderer::getRenderer());
 
-    // (Handle new scene loading, etc.)
     if (newSceneFlag) {
         masterActorList.clear();
 
@@ -132,8 +132,7 @@ void Engine::Render() {
         }
         SceneLoader::loadActors(scenePath);
         for (auto &actor : SceneLoader::loadedActors) {
-            Actor *actorPtr = actor.get();
-            Engine::addActor(*actorPtr);
+            Engine::addActor(actor);
         }
         newSceneFlag = false;
     }
@@ -145,14 +144,14 @@ void Engine::Render() {
 
     // Render world actors using the world queues (imageDrawQueue and textDrawQueue)
 
-    std::multiset<Actor *, ActorComparator> sortedActors;
-    for (auto &actor : masterActorList) {
-        sortedActors.insert(&actor);
-    }
-    // Enqueue world actor draw requests.
-    for (Actor *actorPtr : sortedActors) {
-        renderActor(*actorPtr);
-    }
+    renderOrderBuffer.clear();
+    renderOrderBuffer.reserve(masterActorList.size());
+    for (auto &sp : masterActorList)
+        renderOrderBuffer.push_back(sp.get());
+    std::sort(renderOrderBuffer.begin(), renderOrderBuffer.end(), ActorComparator());
+    for (Actor *a : renderOrderBuffer)
+        renderActor(*a);
+
     // Render any queued world images and texts.
     renderImages();
     renderTexts();
@@ -160,10 +159,7 @@ void Engine::Render() {
     // Reset scale for HUD rendering so that UI elements render at their intended size.
     SDL_RenderSetScale(Renderer::getRenderer(), 1.0f, 1.0f);
 
-    if (getHasPlayer()) {
-        renderHUD();      // Uses its own separate HUD queue.
-        renderDialogue(); // Also part of the HUD/UI.
-    }
+    renderHUD(); // Uses its own separate HUD queue.
 
     renderImages();
     renderTexts();
@@ -187,112 +183,6 @@ void Engine::updateActors() {
     ComponentManager::ProcessOnUpdate();
 }
 
-void Engine::RenderIntro() {
-    // Render intro images
-    // If intro_image array exists, load each image into memory
-    // If intro_image array does not exist, do nothingg
-
-    auto &imageCache = ImageDB::getIntroImageCache();
-    auto &textCache  = TextDB::getIntroTextCache();
-
-    if (imageCache.size() > introImgIndex) {
-        imageDrawRequest request;
-
-        request.texture = imageCache[introImgIndex];
-
-        SDL_FRect dstrect;
-        dstrect.x       = 0;
-        dstrect.y       = 0;
-        dstrect.w       = Engine::getXResolution();
-        dstrect.h       = Engine::getYResolution();
-        request.dstrect = dstrect;
-
-        SDL_FRect *srcrect = nullptr;
-        request.srcrect    = srcrect;
-
-        imageDrawQueue.push_back(request);
-
-    } else {
-        imageDrawRequest request;
-
-        request.texture = imageCache[imageCache.size() - 1];
-        SDL_FRect dstrect;
-        dstrect.x       = 0;
-        dstrect.y       = 0;
-        dstrect.w       = Engine::getXResolution();
-        dstrect.h       = Engine::getYResolution();
-        request.dstrect = dstrect;
-
-        SDL_FRect *srcrect = nullptr;
-        request.srcrect    = srcrect;
-
-        imageDrawQueue.push_back(request);
-    }
-
-    if (textCache.size() > 0) {
-
-        if (introTextIndex < textCache.size()) {
-
-            textRequest request;
-            request.text     = textCache[introTextIndex];
-            request.fontSize = 16;
-            request.color    = {255, 255, 255, 255};
-            request.x        = 25;
-            request.y        = Engine::getYResolution() - 50;
-
-            textDrawQueue.push_back(request);
-        } else {
-            textRequest request;
-            request.text     = textCache[textCache.size() - 1];
-            request.fontSize = 16;
-            request.color    = {255, 255, 255, 255};
-            request.x        = 25;
-            request.y        = Engine::getYResolution() - 50;
-            //
-            textDrawQueue.push_back(request);
-        }
-    }
-}
-
-void Engine::renderHUD() {
-
-    // Enqueue one health icon per health point.
-    // The starting position is (5,25), and each subsequent icon is offset horizontally by (hpW + 5) pixels.
-
-    // textDrawQueueHUD.push_back(scoreReq);
-}
-
-void Engine::renderDialogue() {
-
-    // Build a vector of actors with non-empty dialogue.
-    std::vector<Actor *> dialogueActors;
-
-    // find player, and check its trigger set, and then check if any of the actors in the set have dialogue
-    for (auto &player : masterActorList) {
-
-        if (player.getName() == "player") {
-        }
-    }
-
-    int m = dialogueActors.size();
-    int i = 0;
-    // Now iterate over only those actors with dialogue.
-    for (auto &actor : dialogueActors) {
-        textRequest request;
-
-        request.text = actor->getNearbyDialogue();
-
-        request.fontSize = 16;
-        request.color    = {255, 255, 255, 255};
-        request.x        = 25;
-        // The bottom-most dialogue message appears at y = (y_resolution - 50),
-        // and each previous message is 50 pixels higher.
-        request.y = Engine::getYResolution() - 50 - (i * 50);
-
-        textDrawQueue.push_back(request);
-        i++; // Increment for each valid dialogue message.
-    }
-}
 void Engine::renderImages() {
     for (auto &request : imageDrawQueue) {
         if (request.actor == nullptr) {
@@ -363,7 +253,11 @@ void Engine::renderImages() {
 
 void Engine::renderTexts() {
     for (auto &request : textDrawQueue) {
-        SDL_Surface *surface = TTF_RenderText_Solid(TextDB::getFont(), request.text.c_str(), request.color);
+
+        TTF_Font *font = TextDB::getFont(request.fontName, request.fontSize);
+
+        SDL_Surface *surface = TTF_RenderText_Solid(font, request.text.c_str(), request.color);
+        SDL_SetSurfaceAlphaMod(surface, request.alpha);
         SDL_Texture *texture = SDL_CreateTextureFromSurface(Renderer::getRenderer(), surface);
 
         SDL_FRect dstrect;
@@ -417,53 +311,6 @@ void Engine::renderHUDQueue() {
     textDrawQueueHUD.clear();
 }
 
-void Engine::renderOutro(int index) {
-
-    std::array<SDL_Texture *, 2> outroImageCache = ImageDB::getOutroImageCache();
-
-    if (index == 0) {
-        imageDrawRequest request;
-
-        request.texture = outroImageCache[0];
-
-        if (outroImageCache[0] == nullptr) {
-            exit(0);
-        }
-
-        SDL_FRect dstrect;
-        dstrect.x       = 0;
-        dstrect.y       = 0;
-        dstrect.w       = Engine::getXResolution();
-        dstrect.h       = Engine::getYResolution();
-        request.dstrect = dstrect;
-
-        SDL_FRect *srcrect = nullptr;
-        request.srcrect    = srcrect;
-
-        imageDrawQueue.push_back(request);
-    } else {
-        imageDrawRequest request;
-
-        request.texture = outroImageCache[1];
-
-        if (outroImageCache[1] == nullptr) {
-            exit(0);
-        }
-
-        SDL_FRect dstrect;
-        dstrect.x       = 0;
-        dstrect.y       = 0;
-        dstrect.w       = Engine::getXResolution();
-        dstrect.h       = Engine::getYResolution();
-        request.dstrect = dstrect;
-
-        SDL_FRect *srcrect = nullptr;
-        request.srcrect    = srcrect;
-
-        imageDrawQueue.push_back(request);
-    }
-}
-
 void Engine::renderActor(Actor &actor) {
     // Render the actor
     // if actor.view is not nullptr, render the actor's view at the actor's position
@@ -501,7 +348,7 @@ SDL_Texture *Engine::getTextTexture(const std::string &text, int fontSize, const
     }
 
     // Not in cache, so render it.
-    TTF_Font    *font    = TextDB::getFont(); // or however you retrieve the appropriate font
+    TTF_Font    *font    = TextDB::getFont("font_name", fontSize);
     SDL_Surface *surface = TTF_RenderText_Solid(font, text.c_str(), color);
     if (!surface) {
         std::cout << "Failed to render text surface: " << TTF_GetError() << std::endl;
@@ -569,16 +416,8 @@ int Engine::getClearedColorB() {
     return clear_color_b;
 }
 
-void Engine::addActor(Actor &actor) {
-    masterActorList.push_back(actor);
-}
-
-int Engine::getGameState() {
-    return gameState;
-}
-
-void Engine::setGameState(int state) {
-    gameState = state;
+void Engine::addActor(std::shared_ptr<Actor> actor) {
+    masterActorList.push_back(std::move(actor));
 }
 
 void Engine::addTextureToCache(std::string name, SDL_Texture *texture) {
@@ -642,24 +481,95 @@ float Engine::getPlayerSpeed() {
 }
 
 luabridge::LuaRef Engine::Find(const std::string &name) {
-    for (auto &actor : masterActorList) {
-        if (actor.getName() == name) {
-            // need to return the refreence to the  actor
-            return luabridge::LuaRef(ComponentManager::getLuaState(), &actor);
+    lua_State *L = ComponentManager::getLuaState();
+    for (auto &actorPtr : masterActorList) {
+        if (actorPtr->getName() == name && !actorPtr->isDestroyed()) {
+            // pass the raw Actor* not &actorPtr
+            return luabridge::LuaRef(L, actorPtr.get());
         }
     }
-    return luabridge::LuaRef(ComponentManager::getLuaState());
+    return luabridge::LuaRef(L); // nil
 }
 
 luabridge::LuaRef Engine::FindAll(const std::string &name) {
-    luabridge::LuaRef resultTable = luabridge::newTable(ComponentManager::getLuaState());
-    int               index       = 1;
-
-    for (auto &actor : masterActorList) {
-        if (actor.getName() == name) {
-            resultTable[index] = luabridge::LuaRef(ComponentManager::getLuaState(), &actor);
-            index++;
+    lua_State        *L      = ComponentManager::getLuaState();
+    luabridge::LuaRef result = luabridge::newTable(L);
+    int               idx    = 1;
+    for (auto &actorPtr : masterActorList) {
+        if (actorPtr->getName() == name && !actorPtr->isDestroyed()) {
+            // again, unwrap with .get()
+            result[idx++] = luabridge::LuaRef(L, actorPtr.get());
         }
     }
-    return resultTable;
+    return result;
+}
+
+// Instantiate: called from Lua
+luabridge::LuaRef Engine::Instantiate(const std::string &templateName) {
+    lua_State *L = ComponentManager::getLuaState();
+
+    // 1) create & ID the actor
+    auto actor = std::make_shared<Actor>();
+    actor->setId(idCounter++); // Increment the global ID counter
+
+    // 2) apply the C++ template (this should add the default components, set name, etc.)
+    TemplateDB::loadTemplate(templateName, *actor);
+
+    // 3) collect it for the next frame
+    pendingActorAdds.emplace_back(actor);
+    masterActorList.push_back(actor);
+
+    // 4) immediately return a LuaRef so scripts can Find() it
+    return luabridge::LuaRef(L, actor.get());
+}
+
+void Engine::flushPendingActors() {
+    // move each pending actor into the “live” list and queue its components.
+    for (auto &actor : pendingActorAdds) {
+
+        // queue all inherited/in-scene components for next frame’s OnStart/OnUpdate/...:
+        for (auto &kv : actor->getComponentsMap()) {
+            const std::string &key  = kv.first;
+            auto               inst = *kv.second;
+
+            if (inst["OnStart"].isFunction())
+                ComponentManager::QueueOnStart(actor->getId(), key, inst);
+
+            if (inst["OnUpdate"].isFunction())
+                ComponentManager::QueueOnUpdate(actor->getId(), kv.second);
+
+            if (inst["OnLateUpdate"].isFunction())
+                ComponentManager::QueueOnLateUpdate(actor->getId(), kv.second);
+        }
+    }
+    pendingActorAdds.clear();
+}
+
+void Engine::DestroyActor(Actor *actor) {
+    for (auto &kv : actor->getComponentsMap()) {
+        auto &inst      = *kv.second;
+        inst["enabled"] = false;
+    }
+    actor->markDestroyed();
+
+    // 2) schedule the actor itself for removal
+    pendingActorDestroys.push_back(actor);
+}
+
+void Engine::flushPendingActorDestroys() {
+    if (pendingActorDestroys.empty())
+        return;
+
+    // Remove any shared_ptr<Actor> whose raw pointer is in pendingActorDestroys
+    auto &live = masterActorList;
+    live.erase(
+        std::remove_if(live.begin(), live.end(),
+                       [&](auto const &ptr) {
+                           return std::find(pendingActorDestroys.begin(),
+                                            pendingActorDestroys.end(),
+                                            ptr.get()) != pendingActorDestroys.end();
+                       }),
+        live.end());
+
+    pendingActorDestroys.clear();
 }

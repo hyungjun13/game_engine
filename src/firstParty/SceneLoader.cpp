@@ -20,18 +20,17 @@ void SceneLoader::loadActors(std::string scene_path) {
     rapidjson::Document document;
     EngineUtil::ReadJsonFile(scene_path, document);
 
-    // Iterate over each actor in the scene.
     for (auto &actorValue : document["actors"].GetArray()) {
         // Create a new Actor on the heap.
         auto newActor = std::make_shared<Actor>();
-        newActor->setId(idCounter++);
+        newActor->setId(Engine::idCounter++);
 
         // Process "template" if present.
         if (actorValue.HasMember("template")) {
-            TemplateDB  templateDB;
+
             std::string templateName = actorValue["template"].GetString();
             // Pass the Actor by reference (or update loadTemplate to accept shared_ptr)
-            templateDB.loadTemplate(templateName, *newActor);
+            TemplateDB::loadTemplate(templateName, *newActor);
         }
 
         // Process "name".
@@ -90,9 +89,10 @@ void SceneLoader::loadActors(std::string scene_path) {
                     // Create a new component instance.
                     luabridge::LuaRef instance = luabridge::newTable(L);
                     ComponentManager::EstablishInheritance(instance, *baseComponent);
-                    instance["key"]     = compKey;
-                    instance["type"]    = compType;
-                    instance["enabled"] = true;
+                    instance["key"]        = compKey;
+                    instance["type"]       = compType;
+                    instance["enabled"]    = true;
+                    instance["hasStarted"] = false;
 
                     // Inject override properties.
                     for (rapidjson::Value::ConstMemberIterator propItr = compObj.MemberBegin();

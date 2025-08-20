@@ -79,37 +79,33 @@ void Actor::swapActorView(std::string viewImage) {
 std::unordered_map<std::string, std::shared_ptr<luabridge::LuaRef>> &Actor::getComponentsMap() {
     return components;
 }
-
 luabridge::LuaRef Actor::AddComponent(std::string type_name) {
-    // Get the Lua state (make sure your ComponentManager provides access to it)
     lua_State *L = ComponentManager::getLuaState();
 
-    // Create a new Lua table that will act as the component.
-    luabridge::LuaRef component = luabridge::LuaRef::newTable(L);
+    // 1) new Lua table
+    luabridge::LuaRef inst = luabridge::newTable(L); //
+    ComponentManager::EstablishInheritance(
+        inst, *ComponentManager::GetComponent(type_name));
 
-    ComponentManager::EstablishInheritance(component, *ComponentManager::GetComponent(type_name));
+    // 2) set built-ins.
+    inst["type"]       = type_name;
+    inst["enabled"]    = true;
+    inst["hasStarted"] = false;
 
-    // Set the basic properties for the component.
-    component["type"]       = type_name;
-    component["enabled"]    = true;
-    component["hasStarted"] = false;
+    // 3) generate global key
+    static int  counter = 0;
+    std::string key     = "r" + std::to_string(counter++);
 
-    // Create a unique component key of the form "r<n>".
-    // n is a global counter that increments each time a runtime component is added.
-    static int  runtimeComponentCounter = 1;
-    std::string compKey                 = "r" + std::to_string(runtimeComponentCounter++);
+    inst["key"] = key;
 
-    // Insert the new component into the actor's component map.
-    // (If you plan to use the "collect-then-alter" pattern later, consider inserting
-    //  into a temporary container and merging at the end of the frame.)
-    components[compKey] = std::make_shared<luabridge::LuaRef>(component);
+    // 4) inject convenience (actor pointer)
+    inst["actor"] = this;
 
-    // Inject convenience references if necessary; for example,
-    // you may wish to set the field "actor" in the component to point back to this actor.
-    injectConveninenceReferences(components[compKey]);
+    // 5) schedule for *next* frame
+    ComponentManager::scheduleRuntimeComponent(this, key, inst);
 
-    // Return the component.
-    return component;
+    // 6) return to Lua
+    return inst;
 }
 
 luabridge::LuaRef Actor::getComponentByKey(std::string key) { //
@@ -169,4 +165,16 @@ luabridge::LuaRef Actor::GetComponents(std::string typeName) {
 
     // If no components matched, the table will be empty.
     return resultTable;
+}
+
+void Actor::RemoveComponent(const luabridge::LuaRef &component) {
+    // grab its key
+    std::string key = component["key"].cast<std::string>();
+
+    // disable right away so Update/LateUpdate skip it
+    component["enabled"] = false;
+    components.erase(key);
+
+    // ask ComponentManager to erase it when safe
+    ComponentManager::scheduleComponentRemoval(this, key);
 }

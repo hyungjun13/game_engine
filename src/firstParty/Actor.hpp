@@ -12,9 +12,6 @@
 
 #include "LuaBridge.h"
 
-class ComponentManager; //
-// #include "Engine.hpp"
-
 class Actor {
   public:
     // Getters
@@ -117,12 +114,13 @@ class Actor {
     }
 
     luabridge::LuaRef getComponentByKey(std::string key);
-
     luabridge::LuaRef GetComponent(std::string typeName);
-
     luabridge::LuaRef GetComponents(std::string typeName);
-
     luabridge::LuaRef AddComponent(std::string type_name);
+    void              RemoveComponent(const luabridge::LuaRef &component);
+
+    void markDestroyed() { destroyed = true; }
+    bool isDestroyed() const { return destroyed; }
 
   private:
     int                id                         = -1;
@@ -152,6 +150,8 @@ class Actor {
     bool hasSpoken = false;
 
     bool lastLooked = false; // up is true, down is false
+
+    bool destroyed = false; // used to mark the actor for destruction
 
     std::unordered_map<std::string, std::shared_ptr<luabridge::LuaRef>> components;
 };

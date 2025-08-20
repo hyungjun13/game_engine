@@ -100,6 +100,8 @@ class ComponentManager {
                                          luabridge::LuaRef inst);
     static void flushPending(); // call at start of next frame
 
+    static void scheduleComponentRemoval(Actor *actor, std::string key);
+
   private:
     static void InitializeState();
     static void InitializeFunctions();
@@ -114,6 +116,10 @@ class ComponentManager {
     static inline std::vector<std::vector<std::shared_ptr<luabridge::LuaRef>>> onLateUpdateQueue;
 
     static inline std::vector<PendingComponent> pendingAdds;
+
+    static inline std::vector<std::pair<Actor *, std::string>> pendingRemovals;
+
+    static void flushPendingRemovals();
 
     inline static lua_State *L;
 };

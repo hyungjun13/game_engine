@@ -1,6 +1,7 @@
 #include "ComponentManager.hpp"
 #include "Engine.hpp"
 #include "Input.hpp"
+#include "TextDB.hpp"
 
 #include <filesystem>
 #include <iostream>
@@ -8,7 +9,6 @@
 
 #include "Helper.h"
 
-// Initialization functions remain unchanged.
 void ComponentManager::Initialize() {
     InitializeState();
     InitializeFunctions();
@@ -42,12 +42,15 @@ void ComponentManager::InitializeFunctions() {
         .addFunction("GetComponent", &Actor::GetComponent)
         .addFunction("GetComponents", &Actor::GetComponents)
         .addFunction("AddComponent", &Actor::AddComponent)
+        .addFunction("RemoveComponent", &Actor::RemoveComponent)
         .endClass();
 
     luabridge::getGlobalNamespace(L)
         .beginNamespace("Actor")
         .addFunction("Find", &Engine::Find)
         .addFunction("FindAll", &Engine::FindAll)
+        .addFunction("Instantiate", &Engine::Instantiate)
+        .addFunction("Destroy", &Engine::DestroyActor)
         .endNamespace();
 
     luabridge::getGlobalNamespace(L)
@@ -70,6 +73,11 @@ void ComponentManager::InitializeFunctions() {
         .addFunction("GetMouseScrollDelta", &Input::GetMouseScrollDelta)
         .addFunction("HideCursor", &Input::HideCursor)
         .addFunction("ShowCursor", &Input::ShowCursor)
+        .endNamespace();
+
+    luabridge::getGlobalNamespace(L)
+        .beginNamespace("Text")
+        .addFunction("Draw", &TextDB::Draw)
         .endNamespace();
 }
 
@@ -128,13 +136,14 @@ void ComponentManager::QueueOnStart(int actorIndex, const std::string &key, luab
 }
 
 void ComponentManager::ProcessOnStart() {
+
     // Process each actor's PQ separately.
     for (auto &pq : onStartQueue) {
         while (!pq.empty()) {
             ComponentOnStartEntry entry = pq.top();
             pq.pop();
             // check if enabled
-            if (entry.componentFunction["OnStart"].isFunction() && entry.componentFunction["enabled"].cast<bool>()) {
+            if (entry.componentFunction["OnStart"].isFunction() && entry.componentFunction["enabled"].cast<bool>() && !entry.componentFunction["hasStarted"].cast<bool>()) {
                 try {
 
                     entry.componentFunction["OnStart"](entry.componentFunction);
@@ -144,6 +153,8 @@ void ComponentManager::ProcessOnStart() {
                     Actor            *actorPtr = actorRef.cast<Actor *>();
                     ReportError(actorPtr->getName(), e);
                 }
+                // Set hasStarted to true after successful OnStart call.
+                entry.componentFunction["hasStarted"] = true;
             }
         }
     }
@@ -167,13 +178,14 @@ void ComponentManager::QueueOnLateUpdate(int actorIndex, std::shared_ptr<luabrid
     onLateUpdateQueue[actorIndex].push_back(instance);
 }
 void ComponentManager::ProcessOnUpdate() {
+
     for (auto &actorQueue : onUpdateQueue) {
         for (auto &instance : actorQueue) {
             // Check that the OnUpdate field is a function.
             if (((*instance)["OnUpdate"]).isFunction() && (*instance)["enabled"].cast<bool>()) {
 
                 try {
-                    // Call onUpdate and pass in ac tor instance as an argument.
+
                     (*instance)["OnUpdate"](*instance);
 
                 } catch (const luabridge::LuaException &e) { //
@@ -188,6 +200,7 @@ void ComponentManager::ProcessOnUpdate() {
 }
 
 void ComponentManager::ProcessOnLateUpdate() {
+
     for (auto &actorQueue : onLateUpdateQueue) {
 
         for (auto &instance : actorQueue) {
@@ -276,4 +289,16 @@ void ComponentManager::flushPending() {
                 std::make_shared<luabridge::LuaRef>(p.instance));
     }
     pendingAdds.clear();
+    flushPendingRemovals();
+}
+
+void ComponentManager::scheduleComponentRemoval(Actor *actor, std::string key) {
+    pendingRemovals.emplace_back(actor, std::move(key));
+}
+
+void ComponentManager::flushPendingRemovals() {
+    for (auto &[actor, key] : pendingRemovals) {
+        actor->getComponentsMap().erase(key);
+    }
+    pendingRemovals.clear();
 }
