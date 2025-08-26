@@ -1,13 +1,13 @@
-# A miniature game engine created by hyungjun
+# A miniature game engine created by Hyungjun Kim
 
 A simple, Unity-inspired, Lua-based 2D game engine with Box2D Physics.  
 Developed for educational purposes at the **University of Michigan, Ann Arbor** as part of **EECS 498: Game Engine Architecture**.
 
 ---
 
-https://github.com/user-attachments/assets/3bad520e-a27d-4899-89e1-f079438cca17
+![agame_engine_k4E7uA6kG6](https://github.com/user-attachments/assets/d59aa408-033f-4750-923e-d7af300a1507)
 
-
+---
 
 ## 🚀 Overview
 This is a simple 2D game engine designed to help understand the principles of game engine architecture while still being powerful enough to build meaningful projects. It features a Lua scripting layer on top of a performant C++ core, which allows experimentation with both high-level design and low-level performance.
