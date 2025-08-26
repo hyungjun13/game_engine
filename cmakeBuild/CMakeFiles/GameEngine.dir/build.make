@@ -53,10 +53,10 @@ RM = /opt/homebrew/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun
+CMAKE_SOURCE_DIR = /Users/kimh2/Documents/Uni/game_engine
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/cmakeBuild
+CMAKE_BINARY_DIR = /Users/kimh2/Documents/Uni/game_engine/cmakeBuild
 
 # Include any dependencies generated for this target.
 include CMakeFiles/GameEngine.dir/depend.make
@@ -73,172 +73,172 @@ CMakeFiles/GameEngine.dir/codegen:
 .PHONY : CMakeFiles/GameEngine.dir/codegen
 
 CMakeFiles/GameEngine.dir/src/firstParty/Actor.cpp.o: CMakeFiles/GameEngine.dir/flags.make
-CMakeFiles/GameEngine.dir/src/firstParty/Actor.cpp.o: /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/Actor.cpp
+CMakeFiles/GameEngine.dir/src/firstParty/Actor.cpp.o: /Users/kimh2/Documents/Uni/game_engine/src/firstParty/Actor.cpp
 CMakeFiles/GameEngine.dir/src/firstParty/Actor.cpp.o: CMakeFiles/GameEngine.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/cmakeBuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/GameEngine.dir/src/firstParty/Actor.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/GameEngine.dir/src/firstParty/Actor.cpp.o -MF CMakeFiles/GameEngine.dir/src/firstParty/Actor.cpp.o.d -o CMakeFiles/GameEngine.dir/src/firstParty/Actor.cpp.o -c /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/Actor.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/kimh2/Documents/Uni/game_engine/cmakeBuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/GameEngine.dir/src/firstParty/Actor.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/GameEngine.dir/src/firstParty/Actor.cpp.o -MF CMakeFiles/GameEngine.dir/src/firstParty/Actor.cpp.o.d -o CMakeFiles/GameEngine.dir/src/firstParty/Actor.cpp.o -c /Users/kimh2/Documents/Uni/game_engine/src/firstParty/Actor.cpp
 
 CMakeFiles/GameEngine.dir/src/firstParty/Actor.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/GameEngine.dir/src/firstParty/Actor.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/Actor.cpp > CMakeFiles/GameEngine.dir/src/firstParty/Actor.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/kimh2/Documents/Uni/game_engine/src/firstParty/Actor.cpp > CMakeFiles/GameEngine.dir/src/firstParty/Actor.cpp.i
 
 CMakeFiles/GameEngine.dir/src/firstParty/Actor.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/GameEngine.dir/src/firstParty/Actor.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/Actor.cpp -o CMakeFiles/GameEngine.dir/src/firstParty/Actor.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/kimh2/Documents/Uni/game_engine/src/firstParty/Actor.cpp -o CMakeFiles/GameEngine.dir/src/firstParty/Actor.cpp.s
 
 CMakeFiles/GameEngine.dir/src/firstParty/AudioDB.cpp.o: CMakeFiles/GameEngine.dir/flags.make
-CMakeFiles/GameEngine.dir/src/firstParty/AudioDB.cpp.o: /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/AudioDB.cpp
+CMakeFiles/GameEngine.dir/src/firstParty/AudioDB.cpp.o: /Users/kimh2/Documents/Uni/game_engine/src/firstParty/AudioDB.cpp
 CMakeFiles/GameEngine.dir/src/firstParty/AudioDB.cpp.o: CMakeFiles/GameEngine.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/cmakeBuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/GameEngine.dir/src/firstParty/AudioDB.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/GameEngine.dir/src/firstParty/AudioDB.cpp.o -MF CMakeFiles/GameEngine.dir/src/firstParty/AudioDB.cpp.o.d -o CMakeFiles/GameEngine.dir/src/firstParty/AudioDB.cpp.o -c /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/AudioDB.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/kimh2/Documents/Uni/game_engine/cmakeBuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/GameEngine.dir/src/firstParty/AudioDB.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/GameEngine.dir/src/firstParty/AudioDB.cpp.o -MF CMakeFiles/GameEngine.dir/src/firstParty/AudioDB.cpp.o.d -o CMakeFiles/GameEngine.dir/src/firstParty/AudioDB.cpp.o -c /Users/kimh2/Documents/Uni/game_engine/src/firstParty/AudioDB.cpp
 
 CMakeFiles/GameEngine.dir/src/firstParty/AudioDB.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/GameEngine.dir/src/firstParty/AudioDB.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/AudioDB.cpp > CMakeFiles/GameEngine.dir/src/firstParty/AudioDB.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/kimh2/Documents/Uni/game_engine/src/firstParty/AudioDB.cpp > CMakeFiles/GameEngine.dir/src/firstParty/AudioDB.cpp.i
 
 CMakeFiles/GameEngine.dir/src/firstParty/AudioDB.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/GameEngine.dir/src/firstParty/AudioDB.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/AudioDB.cpp -o CMakeFiles/GameEngine.dir/src/firstParty/AudioDB.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/kimh2/Documents/Uni/game_engine/src/firstParty/AudioDB.cpp -o CMakeFiles/GameEngine.dir/src/firstParty/AudioDB.cpp.s
 
 CMakeFiles/GameEngine.dir/src/firstParty/ComponentManager.cpp.o: CMakeFiles/GameEngine.dir/flags.make
-CMakeFiles/GameEngine.dir/src/firstParty/ComponentManager.cpp.o: /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/ComponentManager.cpp
+CMakeFiles/GameEngine.dir/src/firstParty/ComponentManager.cpp.o: /Users/kimh2/Documents/Uni/game_engine/src/firstParty/ComponentManager.cpp
 CMakeFiles/GameEngine.dir/src/firstParty/ComponentManager.cpp.o: CMakeFiles/GameEngine.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/cmakeBuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/GameEngine.dir/src/firstParty/ComponentManager.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/GameEngine.dir/src/firstParty/ComponentManager.cpp.o -MF CMakeFiles/GameEngine.dir/src/firstParty/ComponentManager.cpp.o.d -o CMakeFiles/GameEngine.dir/src/firstParty/ComponentManager.cpp.o -c /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/ComponentManager.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/kimh2/Documents/Uni/game_engine/cmakeBuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/GameEngine.dir/src/firstParty/ComponentManager.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/GameEngine.dir/src/firstParty/ComponentManager.cpp.o -MF CMakeFiles/GameEngine.dir/src/firstParty/ComponentManager.cpp.o.d -o CMakeFiles/GameEngine.dir/src/firstParty/ComponentManager.cpp.o -c /Users/kimh2/Documents/Uni/game_engine/src/firstParty/ComponentManager.cpp
 
 CMakeFiles/GameEngine.dir/src/firstParty/ComponentManager.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/GameEngine.dir/src/firstParty/ComponentManager.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/ComponentManager.cpp > CMakeFiles/GameEngine.dir/src/firstParty/ComponentManager.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/kimh2/Documents/Uni/game_engine/src/firstParty/ComponentManager.cpp > CMakeFiles/GameEngine.dir/src/firstParty/ComponentManager.cpp.i
 
 CMakeFiles/GameEngine.dir/src/firstParty/ComponentManager.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/GameEngine.dir/src/firstParty/ComponentManager.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/ComponentManager.cpp -o CMakeFiles/GameEngine.dir/src/firstParty/ComponentManager.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/kimh2/Documents/Uni/game_engine/src/firstParty/ComponentManager.cpp -o CMakeFiles/GameEngine.dir/src/firstParty/ComponentManager.cpp.s
 
 CMakeFiles/GameEngine.dir/src/firstParty/Engine.cpp.o: CMakeFiles/GameEngine.dir/flags.make
-CMakeFiles/GameEngine.dir/src/firstParty/Engine.cpp.o: /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/Engine.cpp
+CMakeFiles/GameEngine.dir/src/firstParty/Engine.cpp.o: /Users/kimh2/Documents/Uni/game_engine/src/firstParty/Engine.cpp
 CMakeFiles/GameEngine.dir/src/firstParty/Engine.cpp.o: CMakeFiles/GameEngine.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/cmakeBuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/GameEngine.dir/src/firstParty/Engine.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/GameEngine.dir/src/firstParty/Engine.cpp.o -MF CMakeFiles/GameEngine.dir/src/firstParty/Engine.cpp.o.d -o CMakeFiles/GameEngine.dir/src/firstParty/Engine.cpp.o -c /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/Engine.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/kimh2/Documents/Uni/game_engine/cmakeBuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/GameEngine.dir/src/firstParty/Engine.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/GameEngine.dir/src/firstParty/Engine.cpp.o -MF CMakeFiles/GameEngine.dir/src/firstParty/Engine.cpp.o.d -o CMakeFiles/GameEngine.dir/src/firstParty/Engine.cpp.o -c /Users/kimh2/Documents/Uni/game_engine/src/firstParty/Engine.cpp
 
 CMakeFiles/GameEngine.dir/src/firstParty/Engine.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/GameEngine.dir/src/firstParty/Engine.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/Engine.cpp > CMakeFiles/GameEngine.dir/src/firstParty/Engine.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/kimh2/Documents/Uni/game_engine/src/firstParty/Engine.cpp > CMakeFiles/GameEngine.dir/src/firstParty/Engine.cpp.i
 
 CMakeFiles/GameEngine.dir/src/firstParty/Engine.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/GameEngine.dir/src/firstParty/Engine.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/Engine.cpp -o CMakeFiles/GameEngine.dir/src/firstParty/Engine.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/kimh2/Documents/Uni/game_engine/src/firstParty/Engine.cpp -o CMakeFiles/GameEngine.dir/src/firstParty/Engine.cpp.s
 
 CMakeFiles/GameEngine.dir/src/firstParty/EngineUtil.cpp.o: CMakeFiles/GameEngine.dir/flags.make
-CMakeFiles/GameEngine.dir/src/firstParty/EngineUtil.cpp.o: /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/EngineUtil.cpp
+CMakeFiles/GameEngine.dir/src/firstParty/EngineUtil.cpp.o: /Users/kimh2/Documents/Uni/game_engine/src/firstParty/EngineUtil.cpp
 CMakeFiles/GameEngine.dir/src/firstParty/EngineUtil.cpp.o: CMakeFiles/GameEngine.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/cmakeBuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/GameEngine.dir/src/firstParty/EngineUtil.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/GameEngine.dir/src/firstParty/EngineUtil.cpp.o -MF CMakeFiles/GameEngine.dir/src/firstParty/EngineUtil.cpp.o.d -o CMakeFiles/GameEngine.dir/src/firstParty/EngineUtil.cpp.o -c /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/EngineUtil.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/kimh2/Documents/Uni/game_engine/cmakeBuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/GameEngine.dir/src/firstParty/EngineUtil.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/GameEngine.dir/src/firstParty/EngineUtil.cpp.o -MF CMakeFiles/GameEngine.dir/src/firstParty/EngineUtil.cpp.o.d -o CMakeFiles/GameEngine.dir/src/firstParty/EngineUtil.cpp.o -c /Users/kimh2/Documents/Uni/game_engine/src/firstParty/EngineUtil.cpp
 
 CMakeFiles/GameEngine.dir/src/firstParty/EngineUtil.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/GameEngine.dir/src/firstParty/EngineUtil.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/EngineUtil.cpp > CMakeFiles/GameEngine.dir/src/firstParty/EngineUtil.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/kimh2/Documents/Uni/game_engine/src/firstParty/EngineUtil.cpp > CMakeFiles/GameEngine.dir/src/firstParty/EngineUtil.cpp.i
 
 CMakeFiles/GameEngine.dir/src/firstParty/EngineUtil.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/GameEngine.dir/src/firstParty/EngineUtil.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/EngineUtil.cpp -o CMakeFiles/GameEngine.dir/src/firstParty/EngineUtil.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/kimh2/Documents/Uni/game_engine/src/firstParty/EngineUtil.cpp -o CMakeFiles/GameEngine.dir/src/firstParty/EngineUtil.cpp.s
 
 CMakeFiles/GameEngine.dir/src/firstParty/ImageDB.cpp.o: CMakeFiles/GameEngine.dir/flags.make
-CMakeFiles/GameEngine.dir/src/firstParty/ImageDB.cpp.o: /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/ImageDB.cpp
+CMakeFiles/GameEngine.dir/src/firstParty/ImageDB.cpp.o: /Users/kimh2/Documents/Uni/game_engine/src/firstParty/ImageDB.cpp
 CMakeFiles/GameEngine.dir/src/firstParty/ImageDB.cpp.o: CMakeFiles/GameEngine.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/cmakeBuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/GameEngine.dir/src/firstParty/ImageDB.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/GameEngine.dir/src/firstParty/ImageDB.cpp.o -MF CMakeFiles/GameEngine.dir/src/firstParty/ImageDB.cpp.o.d -o CMakeFiles/GameEngine.dir/src/firstParty/ImageDB.cpp.o -c /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/ImageDB.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/kimh2/Documents/Uni/game_engine/cmakeBuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/GameEngine.dir/src/firstParty/ImageDB.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/GameEngine.dir/src/firstParty/ImageDB.cpp.o -MF CMakeFiles/GameEngine.dir/src/firstParty/ImageDB.cpp.o.d -o CMakeFiles/GameEngine.dir/src/firstParty/ImageDB.cpp.o -c /Users/kimh2/Documents/Uni/game_engine/src/firstParty/ImageDB.cpp
 
 CMakeFiles/GameEngine.dir/src/firstParty/ImageDB.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/GameEngine.dir/src/firstParty/ImageDB.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/ImageDB.cpp > CMakeFiles/GameEngine.dir/src/firstParty/ImageDB.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/kimh2/Documents/Uni/game_engine/src/firstParty/ImageDB.cpp > CMakeFiles/GameEngine.dir/src/firstParty/ImageDB.cpp.i
 
 CMakeFiles/GameEngine.dir/src/firstParty/ImageDB.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/GameEngine.dir/src/firstParty/ImageDB.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/ImageDB.cpp -o CMakeFiles/GameEngine.dir/src/firstParty/ImageDB.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/kimh2/Documents/Uni/game_engine/src/firstParty/ImageDB.cpp -o CMakeFiles/GameEngine.dir/src/firstParty/ImageDB.cpp.s
 
 CMakeFiles/GameEngine.dir/src/firstParty/Input.cpp.o: CMakeFiles/GameEngine.dir/flags.make
-CMakeFiles/GameEngine.dir/src/firstParty/Input.cpp.o: /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/Input.cpp
+CMakeFiles/GameEngine.dir/src/firstParty/Input.cpp.o: /Users/kimh2/Documents/Uni/game_engine/src/firstParty/Input.cpp
 CMakeFiles/GameEngine.dir/src/firstParty/Input.cpp.o: CMakeFiles/GameEngine.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/cmakeBuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/GameEngine.dir/src/firstParty/Input.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/GameEngine.dir/src/firstParty/Input.cpp.o -MF CMakeFiles/GameEngine.dir/src/firstParty/Input.cpp.o.d -o CMakeFiles/GameEngine.dir/src/firstParty/Input.cpp.o -c /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/Input.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/kimh2/Documents/Uni/game_engine/cmakeBuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/GameEngine.dir/src/firstParty/Input.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/GameEngine.dir/src/firstParty/Input.cpp.o -MF CMakeFiles/GameEngine.dir/src/firstParty/Input.cpp.o.d -o CMakeFiles/GameEngine.dir/src/firstParty/Input.cpp.o -c /Users/kimh2/Documents/Uni/game_engine/src/firstParty/Input.cpp
 
 CMakeFiles/GameEngine.dir/src/firstParty/Input.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/GameEngine.dir/src/firstParty/Input.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/Input.cpp > CMakeFiles/GameEngine.dir/src/firstParty/Input.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/kimh2/Documents/Uni/game_engine/src/firstParty/Input.cpp > CMakeFiles/GameEngine.dir/src/firstParty/Input.cpp.i
 
 CMakeFiles/GameEngine.dir/src/firstParty/Input.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/GameEngine.dir/src/firstParty/Input.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/Input.cpp -o CMakeFiles/GameEngine.dir/src/firstParty/Input.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/kimh2/Documents/Uni/game_engine/src/firstParty/Input.cpp -o CMakeFiles/GameEngine.dir/src/firstParty/Input.cpp.s
 
 CMakeFiles/GameEngine.dir/src/firstParty/Renderer.cpp.o: CMakeFiles/GameEngine.dir/flags.make
-CMakeFiles/GameEngine.dir/src/firstParty/Renderer.cpp.o: /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/Renderer.cpp
+CMakeFiles/GameEngine.dir/src/firstParty/Renderer.cpp.o: /Users/kimh2/Documents/Uni/game_engine/src/firstParty/Renderer.cpp
 CMakeFiles/GameEngine.dir/src/firstParty/Renderer.cpp.o: CMakeFiles/GameEngine.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/cmakeBuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/GameEngine.dir/src/firstParty/Renderer.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/GameEngine.dir/src/firstParty/Renderer.cpp.o -MF CMakeFiles/GameEngine.dir/src/firstParty/Renderer.cpp.o.d -o CMakeFiles/GameEngine.dir/src/firstParty/Renderer.cpp.o -c /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/Renderer.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/kimh2/Documents/Uni/game_engine/cmakeBuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/GameEngine.dir/src/firstParty/Renderer.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/GameEngine.dir/src/firstParty/Renderer.cpp.o -MF CMakeFiles/GameEngine.dir/src/firstParty/Renderer.cpp.o.d -o CMakeFiles/GameEngine.dir/src/firstParty/Renderer.cpp.o -c /Users/kimh2/Documents/Uni/game_engine/src/firstParty/Renderer.cpp
 
 CMakeFiles/GameEngine.dir/src/firstParty/Renderer.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/GameEngine.dir/src/firstParty/Renderer.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/Renderer.cpp > CMakeFiles/GameEngine.dir/src/firstParty/Renderer.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/kimh2/Documents/Uni/game_engine/src/firstParty/Renderer.cpp > CMakeFiles/GameEngine.dir/src/firstParty/Renderer.cpp.i
 
 CMakeFiles/GameEngine.dir/src/firstParty/Renderer.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/GameEngine.dir/src/firstParty/Renderer.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/Renderer.cpp -o CMakeFiles/GameEngine.dir/src/firstParty/Renderer.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/kimh2/Documents/Uni/game_engine/src/firstParty/Renderer.cpp -o CMakeFiles/GameEngine.dir/src/firstParty/Renderer.cpp.s
 
 CMakeFiles/GameEngine.dir/src/firstParty/SceneLoader.cpp.o: CMakeFiles/GameEngine.dir/flags.make
-CMakeFiles/GameEngine.dir/src/firstParty/SceneLoader.cpp.o: /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/SceneLoader.cpp
+CMakeFiles/GameEngine.dir/src/firstParty/SceneLoader.cpp.o: /Users/kimh2/Documents/Uni/game_engine/src/firstParty/SceneLoader.cpp
 CMakeFiles/GameEngine.dir/src/firstParty/SceneLoader.cpp.o: CMakeFiles/GameEngine.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/cmakeBuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/GameEngine.dir/src/firstParty/SceneLoader.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/GameEngine.dir/src/firstParty/SceneLoader.cpp.o -MF CMakeFiles/GameEngine.dir/src/firstParty/SceneLoader.cpp.o.d -o CMakeFiles/GameEngine.dir/src/firstParty/SceneLoader.cpp.o -c /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/SceneLoader.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/kimh2/Documents/Uni/game_engine/cmakeBuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/GameEngine.dir/src/firstParty/SceneLoader.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/GameEngine.dir/src/firstParty/SceneLoader.cpp.o -MF CMakeFiles/GameEngine.dir/src/firstParty/SceneLoader.cpp.o.d -o CMakeFiles/GameEngine.dir/src/firstParty/SceneLoader.cpp.o -c /Users/kimh2/Documents/Uni/game_engine/src/firstParty/SceneLoader.cpp
 
 CMakeFiles/GameEngine.dir/src/firstParty/SceneLoader.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/GameEngine.dir/src/firstParty/SceneLoader.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/SceneLoader.cpp > CMakeFiles/GameEngine.dir/src/firstParty/SceneLoader.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/kimh2/Documents/Uni/game_engine/src/firstParty/SceneLoader.cpp > CMakeFiles/GameEngine.dir/src/firstParty/SceneLoader.cpp.i
 
 CMakeFiles/GameEngine.dir/src/firstParty/SceneLoader.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/GameEngine.dir/src/firstParty/SceneLoader.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/SceneLoader.cpp -o CMakeFiles/GameEngine.dir/src/firstParty/SceneLoader.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/kimh2/Documents/Uni/game_engine/src/firstParty/SceneLoader.cpp -o CMakeFiles/GameEngine.dir/src/firstParty/SceneLoader.cpp.s
 
 CMakeFiles/GameEngine.dir/src/firstParty/TemplateDB.cpp.o: CMakeFiles/GameEngine.dir/flags.make
-CMakeFiles/GameEngine.dir/src/firstParty/TemplateDB.cpp.o: /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/TemplateDB.cpp
+CMakeFiles/GameEngine.dir/src/firstParty/TemplateDB.cpp.o: /Users/kimh2/Documents/Uni/game_engine/src/firstParty/TemplateDB.cpp
 CMakeFiles/GameEngine.dir/src/firstParty/TemplateDB.cpp.o: CMakeFiles/GameEngine.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/cmakeBuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/GameEngine.dir/src/firstParty/TemplateDB.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/GameEngine.dir/src/firstParty/TemplateDB.cpp.o -MF CMakeFiles/GameEngine.dir/src/firstParty/TemplateDB.cpp.o.d -o CMakeFiles/GameEngine.dir/src/firstParty/TemplateDB.cpp.o -c /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/TemplateDB.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/kimh2/Documents/Uni/game_engine/cmakeBuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/GameEngine.dir/src/firstParty/TemplateDB.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/GameEngine.dir/src/firstParty/TemplateDB.cpp.o -MF CMakeFiles/GameEngine.dir/src/firstParty/TemplateDB.cpp.o.d -o CMakeFiles/GameEngine.dir/src/firstParty/TemplateDB.cpp.o -c /Users/kimh2/Documents/Uni/game_engine/src/firstParty/TemplateDB.cpp
 
 CMakeFiles/GameEngine.dir/src/firstParty/TemplateDB.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/GameEngine.dir/src/firstParty/TemplateDB.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/TemplateDB.cpp > CMakeFiles/GameEngine.dir/src/firstParty/TemplateDB.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/kimh2/Documents/Uni/game_engine/src/firstParty/TemplateDB.cpp > CMakeFiles/GameEngine.dir/src/firstParty/TemplateDB.cpp.i
 
 CMakeFiles/GameEngine.dir/src/firstParty/TemplateDB.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/GameEngine.dir/src/firstParty/TemplateDB.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/TemplateDB.cpp -o CMakeFiles/GameEngine.dir/src/firstParty/TemplateDB.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/kimh2/Documents/Uni/game_engine/src/firstParty/TemplateDB.cpp -o CMakeFiles/GameEngine.dir/src/firstParty/TemplateDB.cpp.s
 
 CMakeFiles/GameEngine.dir/src/firstParty/TextDB.cpp.o: CMakeFiles/GameEngine.dir/flags.make
-CMakeFiles/GameEngine.dir/src/firstParty/TextDB.cpp.o: /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/TextDB.cpp
+CMakeFiles/GameEngine.dir/src/firstParty/TextDB.cpp.o: /Users/kimh2/Documents/Uni/game_engine/src/firstParty/TextDB.cpp
 CMakeFiles/GameEngine.dir/src/firstParty/TextDB.cpp.o: CMakeFiles/GameEngine.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/cmakeBuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building CXX object CMakeFiles/GameEngine.dir/src/firstParty/TextDB.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/GameEngine.dir/src/firstParty/TextDB.cpp.o -MF CMakeFiles/GameEngine.dir/src/firstParty/TextDB.cpp.o.d -o CMakeFiles/GameEngine.dir/src/firstParty/TextDB.cpp.o -c /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/TextDB.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/kimh2/Documents/Uni/game_engine/cmakeBuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building CXX object CMakeFiles/GameEngine.dir/src/firstParty/TextDB.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/GameEngine.dir/src/firstParty/TextDB.cpp.o -MF CMakeFiles/GameEngine.dir/src/firstParty/TextDB.cpp.o.d -o CMakeFiles/GameEngine.dir/src/firstParty/TextDB.cpp.o -c /Users/kimh2/Documents/Uni/game_engine/src/firstParty/TextDB.cpp
 
 CMakeFiles/GameEngine.dir/src/firstParty/TextDB.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/GameEngine.dir/src/firstParty/TextDB.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/TextDB.cpp > CMakeFiles/GameEngine.dir/src/firstParty/TextDB.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/kimh2/Documents/Uni/game_engine/src/firstParty/TextDB.cpp > CMakeFiles/GameEngine.dir/src/firstParty/TextDB.cpp.i
 
 CMakeFiles/GameEngine.dir/src/firstParty/TextDB.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/GameEngine.dir/src/firstParty/TextDB.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/TextDB.cpp -o CMakeFiles/GameEngine.dir/src/firstParty/TextDB.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/kimh2/Documents/Uni/game_engine/src/firstParty/TextDB.cpp -o CMakeFiles/GameEngine.dir/src/firstParty/TextDB.cpp.s
 
 CMakeFiles/GameEngine.dir/src/firstParty/main.cpp.o: CMakeFiles/GameEngine.dir/flags.make
-CMakeFiles/GameEngine.dir/src/firstParty/main.cpp.o: /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/main.cpp
+CMakeFiles/GameEngine.dir/src/firstParty/main.cpp.o: /Users/kimh2/Documents/Uni/game_engine/src/firstParty/main.cpp
 CMakeFiles/GameEngine.dir/src/firstParty/main.cpp.o: CMakeFiles/GameEngine.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/cmakeBuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Building CXX object CMakeFiles/GameEngine.dir/src/firstParty/main.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/GameEngine.dir/src/firstParty/main.cpp.o -MF CMakeFiles/GameEngine.dir/src/firstParty/main.cpp.o.d -o CMakeFiles/GameEngine.dir/src/firstParty/main.cpp.o -c /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/main.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/kimh2/Documents/Uni/game_engine/cmakeBuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Building CXX object CMakeFiles/GameEngine.dir/src/firstParty/main.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/GameEngine.dir/src/firstParty/main.cpp.o -MF CMakeFiles/GameEngine.dir/src/firstParty/main.cpp.o.d -o CMakeFiles/GameEngine.dir/src/firstParty/main.cpp.o -c /Users/kimh2/Documents/Uni/game_engine/src/firstParty/main.cpp
 
 CMakeFiles/GameEngine.dir/src/firstParty/main.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/GameEngine.dir/src/firstParty/main.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/main.cpp > CMakeFiles/GameEngine.dir/src/firstParty/main.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/kimh2/Documents/Uni/game_engine/src/firstParty/main.cpp > CMakeFiles/GameEngine.dir/src/firstParty/main.cpp.i
 
 CMakeFiles/GameEngine.dir/src/firstParty/main.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/GameEngine.dir/src/firstParty/main.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/firstParty/main.cpp -o CMakeFiles/GameEngine.dir/src/firstParty/main.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/kimh2/Documents/Uni/game_engine/src/firstParty/main.cpp -o CMakeFiles/GameEngine.dir/src/firstParty/main.cpp.s
 
 # Object files for target GameEngine
 GameEngine_OBJECTS = \
@@ -272,13 +272,13 @@ GameEngine: CMakeFiles/GameEngine.dir/src/firstParty/TextDB.cpp.o
 GameEngine: CMakeFiles/GameEngine.dir/src/firstParty/main.cpp.o
 GameEngine: CMakeFiles/GameEngine.dir/build.make
 GameEngine: src/thirdParty/lua/liblua.a
-GameEngine: /opt/homebrew/Cellar/sdl2/2.32.4/lib/libSDL2.dylib
-GameEngine: /opt/homebrew/Cellar/sdl2/2.32.4/lib/libSDL2main.a
+GameEngine: /opt/homebrew/Cellar/sdl2/2.32.8/lib/libSDL2.dylib
+GameEngine: /opt/homebrew/Cellar/sdl2/2.32.8/lib/libSDL2main.a
 GameEngine: /opt/homebrew/Cellar/sdl2_image/2.8.8/lib/libSDL2_image.dylib
 GameEngine: /opt/homebrew/Cellar/sdl2_ttf/2.24.0/lib/libSDL2_ttf.dylib
 GameEngine: /opt/homebrew/Cellar/sdl2_mixer/2.8.1_1/lib/libSDL2_mixer.dylib
 GameEngine: CMakeFiles/GameEngine.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/cmakeBuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Linking CXX executable GameEngine"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/kimh2/Documents/Uni/game_engine/cmakeBuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Linking CXX executable GameEngine"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/GameEngine.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
@@ -290,6 +290,6 @@ CMakeFiles/GameEngine.dir/clean:
 .PHONY : CMakeFiles/GameEngine.dir/clean
 
 CMakeFiles/GameEngine.dir/depend:
-	cd /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/cmakeBuild && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/cmakeBuild /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/cmakeBuild /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/cmakeBuild/CMakeFiles/GameEngine.dir/DependInfo.cmake "--color=$(COLOR)"
+	cd /Users/kimh2/Documents/Uni/game_engine/cmakeBuild && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /Users/kimh2/Documents/Uni/game_engine /Users/kimh2/Documents/Uni/game_engine /Users/kimh2/Documents/Uni/game_engine/cmakeBuild /Users/kimh2/Documents/Uni/game_engine/cmakeBuild /Users/kimh2/Documents/Uni/game_engine/cmakeBuild/CMakeFiles/GameEngine.dir/DependInfo.cmake "--color=$(COLOR)"
 .PHONY : CMakeFiles/GameEngine.dir/depend
 

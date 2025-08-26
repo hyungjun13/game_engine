@@ -1,7 +1,6 @@
 #include "ComponentManager.hpp"
 #include "Engine.hpp"
 #include "Input.hpp"
-#include "TextDB.hpp"
 
 #include <filesystem>
 #include <iostream>
@@ -73,11 +72,6 @@ void ComponentManager::InitializeFunctions() {
         .addFunction("GetMouseScrollDelta", &Input::GetMouseScrollDelta)
         .addFunction("HideCursor", &Input::HideCursor)
         .addFunction("ShowCursor", &Input::ShowCursor)
-        .endNamespace();
-
-    luabridge::getGlobalNamespace(L)
-        .beginNamespace("Text")
-        .addFunction("Draw", &TextDB::Draw)
         .endNamespace();
 }
 

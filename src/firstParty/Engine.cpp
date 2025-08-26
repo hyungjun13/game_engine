@@ -159,7 +159,10 @@ void Engine::Render() {
     // Reset scale for HUD rendering so that UI elements render at their intended size.
     SDL_RenderSetScale(Renderer::getRenderer(), 1.0f, 1.0f);
 
-    renderHUD(); // Uses its own separate HUD queue.
+    if (getHasPlayer()) {
+        renderHUD();      // Uses its own separate HUD queue.
+        renderDialogue(); // Also part of the HUD/UI.
+    }
 
     renderImages();
     renderTexts();
@@ -183,6 +186,105 @@ void Engine::updateActors() {
     ComponentManager::ProcessOnUpdate();
 }
 
+void Engine::RenderIntro() {
+    // Render intro images
+    // If intro_image array exists, load each image into memory
+    // If intro_image array does not exist, do nothingg
+
+    auto &imageCache = ImageDB::getIntroImageCache();
+    auto &textCache  = TextDB::getIntroTextCache();
+
+    if (imageCache.size() > introImgIndex) {
+        imageDrawRequest request;
+
+        request.texture = imageCache[introImgIndex];
+
+        SDL_FRect dstrect;
+        dstrect.x       = 0;
+        dstrect.y       = 0;
+        dstrect.w       = Engine::getXResolution();
+        dstrect.h       = Engine::getYResolution();
+        request.dstrect = dstrect;
+
+        SDL_FRect *srcrect = nullptr;
+        request.srcrect    = srcrect;
+
+        imageDrawQueue.push_back(request);
+
+    } else {
+        imageDrawRequest request;
+
+        request.texture = imageCache[imageCache.size() - 1];
+        SDL_FRect dstrect;
+        dstrect.x       = 0;
+        dstrect.y       = 0;
+        dstrect.w       = Engine::getXResolution();
+        dstrect.h       = Engine::getYResolution();
+        request.dstrect = dstrect;
+
+        SDL_FRect *srcrect = nullptr;
+        request.srcrect    = srcrect;
+
+        imageDrawQueue.push_back(request);
+    }
+
+    if (textCache.size() > 0) {
+
+        if (introTextIndex < textCache.size()) {
+
+            textRequest request;
+            request.text     = textCache[introTextIndex];
+            request.fontSize = 16;
+            request.color    = {255, 255, 255, 255};
+            request.x        = 25;
+            request.y        = Engine::getYResolution() - 50;
+
+            textDrawQueue.push_back(request);
+        } else {
+            textRequest request;
+            request.text     = textCache[textCache.size() - 1];
+            request.fontSize = 16;
+            request.color    = {255, 255, 255, 255};
+            request.x        = 25;
+            request.y        = Engine::getYResolution() - 50;
+            //
+            textDrawQueue.push_back(request);
+        }
+    }
+}
+
+void Engine::renderHUD() {
+
+    // Enqueue one health icon per health point.
+    // The starting position is (5,25), and each subsequent icon is offset horizontally by (hpW + 5) pixels.
+
+    // textDrawQueueHUD.push_back(scoreReq);
+}
+
+void Engine::renderDialogue() {
+
+    // Build a vector of actors with non-empty dialogue.
+    std::vector<Actor *> dialogueActors;
+
+    int m = dialogueActors.size();
+    int i = 0;
+    // Now iterate over only those actors with dialogue.
+    for (auto &actor : dialogueActors) {
+        textRequest request;
+
+        request.text = actor->getNearbyDialogue();
+
+        request.fontSize = 16;
+        request.color    = {255, 255, 255, 255};
+        request.x        = 25;
+        // The bottom-most dialogue message appears at y = (y_resolution - 50),
+        // and each previous message is 50 pixels higher.
+        request.y = Engine::getYResolution() - 50 - (i * 50);
+
+        textDrawQueue.push_back(request);
+        i++; // Increment for each valid dialogue message.
+    }
+}
 void Engine::renderImages() {
     for (auto &request : imageDrawQueue) {
         if (request.actor == nullptr) {
@@ -253,11 +355,7 @@ void Engine::renderImages() {
 
 void Engine::renderTexts() {
     for (auto &request : textDrawQueue) {
-
-        TTF_Font *font = TextDB::getFont(request.fontName, request.fontSize);
-
-        SDL_Surface *surface = TTF_RenderText_Solid(font, request.text.c_str(), request.color);
-        SDL_SetSurfaceAlphaMod(surface, request.alpha);
+        SDL_Surface *surface = TTF_RenderText_Solid(TextDB::getFont(), request.text.c_str(), request.color);
         SDL_Texture *texture = SDL_CreateTextureFromSurface(Renderer::getRenderer(), surface);
 
         SDL_FRect dstrect;
@@ -311,6 +409,53 @@ void Engine::renderHUDQueue() {
     textDrawQueueHUD.clear();
 }
 
+void Engine::renderOutro(int index) {
+
+    std::array<SDL_Texture *, 2> outroImageCache = ImageDB::getOutroImageCache();
+
+    if (index == 0) {
+        imageDrawRequest request;
+
+        request.texture = outroImageCache[0];
+
+        if (outroImageCache[0] == nullptr) {
+            exit(0);
+        }
+
+        SDL_FRect dstrect;
+        dstrect.x       = 0;
+        dstrect.y       = 0;
+        dstrect.w       = Engine::getXResolution();
+        dstrect.h       = Engine::getYResolution();
+        request.dstrect = dstrect;
+
+        SDL_FRect *srcrect = nullptr;
+        request.srcrect    = srcrect;
+
+        imageDrawQueue.push_back(request);
+    } else {
+        imageDrawRequest request;
+
+        request.texture = outroImageCache[1];
+
+        if (outroImageCache[1] == nullptr) {
+            exit(0);
+        }
+
+        SDL_FRect dstrect;
+        dstrect.x       = 0;
+        dstrect.y       = 0;
+        dstrect.w       = Engine::getXResolution();
+        dstrect.h       = Engine::getYResolution();
+        request.dstrect = dstrect;
+
+        SDL_FRect *srcrect = nullptr;
+        request.srcrect    = srcrect;
+
+        imageDrawQueue.push_back(request);
+    }
+}
+
 void Engine::renderActor(Actor &actor) {
     // Render the actor
     // if actor.view is not nullptr, render the actor's view at the actor's position
@@ -348,7 +493,7 @@ SDL_Texture *Engine::getTextTexture(const std::string &text, int fontSize, const
     }
 
     // Not in cache, so render it.
-    TTF_Font    *font    = TextDB::getFont("font_name", fontSize);
+    TTF_Font    *font    = TextDB::getFont(); // or however you retrieve the appropriate font
     SDL_Surface *surface = TTF_RenderText_Solid(font, text.c_str(), color);
     if (!surface) {
         std::cout << "Failed to render text surface: " << TTF_GetError() << std::endl;
@@ -418,6 +563,14 @@ int Engine::getClearedColorB() {
 
 void Engine::addActor(std::shared_ptr<Actor> actor) {
     masterActorList.push_back(std::move(actor));
+}
+
+int Engine::getGameState() {
+    return gameState;
+}
+
+void Engine::setGameState(int state) {
+    gameState = state;
 }
 
 void Engine::addTextureToCache(std::string name, SDL_Texture *texture) {

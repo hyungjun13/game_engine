@@ -1,8 +1,8 @@
 {
 	"InstallScripts" : 
 	[
-		"/Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/cmakeBuild/cmake_install.cmake",
-		"/Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/cmakeBuild/src/thirdParty/lua/cmake_install.cmake"
+		"/Users/kimh2/Documents/Uni/game_engine/cmakeBuild/cmake_install.cmake",
+		"/Users/kimh2/Documents/Uni/game_engine/cmakeBuild/src/thirdParty/lua/cmake_install.cmake"
 	],
 	"Parallel" : false
 }

@@ -1,4 +1,4 @@
-# Install script for directory: /Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/thirdParty/lua
+# Install script for directory: /Users/kimh2/Documents/Uni/game_engine/src/thirdParty/lua
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -40,6 +40,6 @@ endif()
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
 if(CMAKE_INSTALL_LOCAL_ONLY)
-  file(WRITE "/Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/cmakeBuild/src/thirdParty/lua/install_local_manifest.txt"
+  file(WRITE "/Users/kimh2/Documents/Uni/game_engine/cmakeBuild/src/thirdParty/lua/install_local_manifest.txt"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
 endif()

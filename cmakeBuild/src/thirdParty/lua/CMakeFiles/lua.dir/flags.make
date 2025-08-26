@@ -4,7 +4,7 @@
 # compile C with /usr/bin/cc
 C_DEFINES = 
 
-C_INCLUDES = -I/Users/kimh2/Documents/Uni/EECS498.007/game_engine_hyungjun/src/thirdParty/lua
+C_INCLUDES = -I/Users/kimh2/Documents/Uni/game_engine/src/thirdParty/lua
 
 C_FLAGSarm64 =  -arch arm64
 
