@@ -9,13 +9,13 @@
 class TextDB {
   public:
     static void check();
-    static void loadIntroText();
+    // static void loadIntroText();
 
-    inline static std::string getIntroText(int index);
+    // inline static std::string getIntroText(int index);
 
-    inline static std::vector<std::string> &getIntroTextCache() {
-        return introTextCache;
-    }
+    // inline static std::vector<std::string> &getIntroTextCache() {
+    //     return introTextCache;
+    // }
 
     inline static void setFont(TTF_Font *f) {
         font = f;
@@ -26,7 +26,7 @@ class TextDB {
     }
 
   private:
-    inline static std::vector<std::string> introTextCache;
+    inline static std::unordered_map<std::string, std::unordered_map<int, TTF_Font *>> fontCache;
 
     inline static TTF_Font *font = nullptr;
 };
