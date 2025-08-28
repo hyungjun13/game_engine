@@ -35,6 +35,7 @@ This is a simple 2D game engine designed to help understand the principles of ga
 - **Lua** – High-level scripting layer with component lifecycle functions  
 - **[SDL2](https://www.libsdl.org/)** – Rendering, window management, and input handling  
 - **[Box2D](https://box2d.org/)** – 2D physics simulation (collisions, rigidbodies, forces) (Coming Soon!)
+- **[CMake](https://cmake.org/)** – Build system to aid cross-platform development workflow  
 - **[GLM](https://github.com/g-truc/glm)** – Mathematics library (vectors, matrices, transformations)  
 - **[RapidJSON](https://rapidjson.org/)** – High-performance JSON parsing for engine configuration and data  
 - **Custom Particle System** – Built-in fast particle rendering  (Coming Soon!)
