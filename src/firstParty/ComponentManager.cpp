@@ -1,6 +1,9 @@
 #include "ComponentManager.hpp"
+#include "AudioDB.hpp"
 #include "Engine.hpp"
+#include "ImageDB.hpp"
 #include "Input.hpp"
+#include "TextDB.hpp"
 
 #include <filesystem>
 #include <iostream>
@@ -8,10 +11,102 @@
 
 #include "Helper.h"
 
+namespace {
+void CameraSetPosition(float x, float y) {
+    Engine::setCameraPosition(glm::vec2(x, y));
+}
+
+glm::vec2 CameraGetPosition() {
+    return Engine::getCameraPosition();
+}
+
+float CameraGetPositionX() {
+    return Engine::getCameraPosition().x;
+}
+
+float CameraGetPositionY() {
+    return Engine::getCameraPosition().y;
+}
+
+void CameraSetZoom(float zoom) {
+    Engine::setZoomFactor(zoom);
+}
+
+float CameraGetZoom() {
+    return Engine::getZoomFactor();
+}
+
+void CameraSetEase(float ease) {
+    Engine::setCamEaseFactor(ease);
+}
+
+float CameraGetEase() {
+    return Engine::getCamEaseFactor();
+}
+
+void SceneLoad(const std::string &sceneName) {
+    Engine::LoadScene(sceneName);
+}
+
+std::string SceneGetCurrent() {
+    return Engine::GetCurrentScene();
+}
+
+void SceneDontDestroy(Actor *actor) {
+    Engine::DontDestroyActor(actor);
+}
+} // namespace
+
 void ComponentManager::Initialize() {
     InitializeState();
     InitializeFunctions();
     InitializeComponents();
+}
+
+bool ComponentManager::IsComponentLoaded(const std::string &componentName) {
+    return loadedComponentCache.find(componentName) != loadedComponentCache.end();
+}
+
+std::shared_ptr<luabridge::LuaRef> ComponentManager::GetComponent(const std::string &componentName) {
+    auto it = loadedComponentCache.find(componentName);
+    if (it == loadedComponentCache.end()) {
+        return nullptr;
+    }
+    return it->second;
+}
+
+void ComponentManager::addComponentToCache(const std::string &componentName, std::shared_ptr<luabridge::LuaRef> component) {
+    loadedComponentCache[componentName] = component;
+}
+
+void ComponentManager::setLuaState(lua_State *luaState) {
+    L = luaState;
+}
+
+lua_State *ComponentManager::getLuaState() {
+    return L;
+}
+
+void ComponentManager::ReportError(const std::string &actor_name, const luabridge::LuaException &e) {
+    std::string error_message = e.what();
+
+    std::replace(error_message.begin(), error_message.end(), '\\', '/');
+
+    std::cout << "\033[31m" << actor_name << " : " << error_message << "\033[0m" << std::endl;
+}
+
+void ComponentManager::sortQueues() {
+    for (auto &vec : onUpdateQueue) {
+        std::sort(vec.begin(), vec.end(), [](const std::shared_ptr<luabridge::LuaRef> &a, const std::shared_ptr<luabridge::LuaRef> &b) {
+            return (*a)["key"].cast<std::string>() < (*b)["key"].cast<std::string>();
+        });
+    }
+
+    for (auto &vec : onLateUpdateQueue) {
+        std::sort(vec.begin(), vec.end(), [](const std::shared_ptr<luabridge::LuaRef> &a, const std::shared_ptr<luabridge::LuaRef> &b) {
+            return (*a)["key"].cast<std::string>() < (*b)["key"].cast<std::string>();
+        });
+    }
 }
 
 void ComponentManager::InitializeState() {
@@ -73,6 +168,46 @@ void ComponentManager::InitializeFunctions() {
         .addFunction("HideCursor", &Input::HideCursor)
         .addFunction("ShowCursor", &Input::ShowCursor)
         .endNamespace();
+
+    luabridge::getGlobalNamespace(L)
+        .beginNamespace("Text")
+        .addFunction("Draw", &TextDB::Draw)
+        .endNamespace();
+
+    luabridge::getGlobalNamespace(L)
+        .beginNamespace("Image")
+        .addFunction("Draw", &ImageDB::Draw)
+        .endNamespace();
+
+    luabridge::getGlobalNamespace(L)
+        .beginNamespace("Audio")
+        .addFunction("Play", &AudioDB::Play)
+        .addFunction("Halt", &AudioDB::Halt)
+        .addFunction("SetVolume", &AudioDB::SetVolume)
+        .endNamespace();
+
+    luabridge::getGlobalNamespace(L)
+        .beginNamespace("Camera")
+        .addFunction("SetPosition", &CameraSetPosition)
+        .addFunction("GetPosition", &CameraGetPosition)
+        .addFunction("GetPositionX", &CameraGetPositionX)
+        .addFunction("GetPositionY", &CameraGetPositionY)
+        .addFunction("SetZoom", &CameraSetZoom)
+        .addFunction("GetZoom", &CameraGetZoom)
+        .addFunction("SetZoomFactor", &CameraSetZoom)
+        .addFunction("GetZoomFactor", &CameraGetZoom)
+        .addFunction("SetEase", &CameraSetEase)
+        .addFunction("GetEase", &CameraGetEase)
+        .addFunction("SetCamEaseFactor", &CameraSetEase)
+        .addFunction("GetCamEaseFactor", &CameraGetEase)
+        .endNamespace();
+
+    luabridge::getGlobalNamespace(L)
+        .beginNamespace("Scene")
+        .addFunction("Load", &SceneLoad)
+        .addFunction("GetCurrent", &SceneGetCurrent)
+        .addFunction("DontDestroy", &SceneDontDestroy)
+        .endNamespace();
 }
 
 void ComponentManager::InitializeComponents() {
@@ -121,12 +256,16 @@ void ComponentManager::EstablishInheritance(luabridge::LuaRef &instance_table, l
 
 // Now include the actorIndex so that components are queued per actor.
 void ComponentManager::QueueOnStart(int actorIndex, const std::string &key, luabridge::LuaRef instance) {
+    if (actorIndex < 0) {
+        return;
+    }
+    const size_t actorIndexU = static_cast<size_t>(actorIndex);
     // Resize the vector if necessary.
-    if (actorIndex >= onStartQueue.size()) {
-        onStartQueue.resize(actorIndex + 1);
+    if (actorIndexU >= onStartQueue.size()) {
+        onStartQueue.resize(actorIndexU + 1);
     }
     ComponentOnStartEntry entry = {key, instance};
-    onStartQueue[actorIndex].push(entry);
+    onStartQueue[actorIndexU].push(entry);
 }
 
 void ComponentManager::ProcessOnStart() {
@@ -136,8 +275,7 @@ void ComponentManager::ProcessOnStart() {
         while (!pq.empty()) {
             ComponentOnStartEntry entry = pq.top();
             pq.pop();
-            // check if enabled
-            if (entry.componentFunction["OnStart"].isFunction() && entry.componentFunction["enabled"].cast<bool>() && !entry.componentFunction["hasStarted"].cast<bool>()) {
+            if (entry.componentFunction["enabled"].cast<bool>() && !entry.componentFunction["hasStarted"].cast<bool>()) {
                 try {
 
                     entry.componentFunction["OnStart"](entry.componentFunction);
@@ -157,26 +295,41 @@ void ComponentManager::ProcessOnStart() {
 }
 
 void ComponentManager::QueueOnUpdate(int actorIndex, std::shared_ptr<luabridge::LuaRef> instance) {
-    // Resize the vector if necessary.
-    if (actorIndex >= onUpdateQueue.size()) {
-        onUpdateQueue.resize(actorIndex + 1);
+    if (actorIndex < 0) {
+        return;
     }
-    onUpdateQueue[actorIndex].push_back(instance);
+    const size_t actorIndexU = static_cast<size_t>(actorIndex);
+    // Resize the vector if necessary.
+    if (actorIndexU >= onUpdateQueue.size()) {
+        onUpdateQueue.resize(actorIndexU + 1);
+    }
+    onUpdateQueue[actorIndexU].push_back(instance);
+    std::sort(onUpdateQueue[actorIndexU].begin(), onUpdateQueue[actorIndexU].end(),
+              [](const std::shared_ptr<luabridge::LuaRef> &a, const std::shared_ptr<luabridge::LuaRef> &b) {
+                  return (*a)["key"].cast<std::string>() < (*b)["key"].cast<std::string>();
+              });
 }
 
 void ComponentManager::QueueOnLateUpdate(int actorIndex, std::shared_ptr<luabridge::LuaRef> instance) {
-    // Resize the vector if necessary.
-    if (actorIndex >= onLateUpdateQueue.size()) {
-        onLateUpdateQueue.resize(actorIndex + 1);
+    if (actorIndex < 0) {
+        return;
     }
-    onLateUpdateQueue[actorIndex].push_back(instance);
+    const size_t actorIndexU = static_cast<size_t>(actorIndex);
+    // Resize the vector if necessary.
+    if (actorIndexU >= onLateUpdateQueue.size()) {
+        onLateUpdateQueue.resize(actorIndexU + 1);
+    }
+    onLateUpdateQueue[actorIndexU].push_back(instance);
+    std::sort(onLateUpdateQueue[actorIndexU].begin(), onLateUpdateQueue[actorIndexU].end(),
+              [](const std::shared_ptr<luabridge::LuaRef> &a, const std::shared_ptr<luabridge::LuaRef> &b) {
+                  return (*a)["key"].cast<std::string>() < (*b)["key"].cast<std::string>();
+              });
 }
 void ComponentManager::ProcessOnUpdate() {
 
     for (auto &actorQueue : onUpdateQueue) {
         for (auto &instance : actorQueue) {
-            // Check that the OnUpdate field is a function.
-            if (((*instance)["OnUpdate"]).isFunction() && (*instance)["enabled"].cast<bool>()) {
+            if ((*instance)["enabled"].cast<bool>()) {
 
                 try {
 
@@ -198,8 +351,7 @@ void ComponentManager::ProcessOnLateUpdate() {
     for (auto &actorQueue : onLateUpdateQueue) {
 
         for (auto &instance : actorQueue) {
-            // Check that the OnLateUpdate field is a function.
-            if (((*instance)["OnLateUpdate"]).isFunction() && (*instance)["enabled"].cast<bool>()) {
+            if ((*instance)["enabled"].cast<bool>()) {
 
                 try {
                     // Call onLateUpdate and pass in actor instance as an argument.
@@ -268,7 +420,7 @@ void ComponentManager::scheduleRuntimeComponent(Actor            *a,
 void ComponentManager::flushPending() {
     for (auto &p : pendingAdds) {
         // actually insert into the actor’s map
-        p.actor->getComponentsMap()[p.key] = std::make_shared<luabridge::LuaRef>(p.instance);
+        p.actor->addComponent(p.key, std::make_shared<luabridge::LuaRef>(p.instance));
         // queue their OnStart/OnUpdate/LateUpdate just like SceneLoader does:
         if (p.instance["OnStart"].isFunction())
             ComponentManager::QueueOnStart(
@@ -286,13 +438,21 @@ void ComponentManager::flushPending() {
     flushPendingRemovals();
 }
 
+void ComponentManager::ResetLifecycleQueues() {
+    onStartQueue.clear();
+    onUpdateQueue.clear();
+    onLateUpdateQueue.clear();
+    pendingAdds.clear();
+    pendingRemovals.clear();
+}
+
 void ComponentManager::scheduleComponentRemoval(Actor *actor, std::string key) {
     pendingRemovals.emplace_back(actor, std::move(key));
 }
 
 void ComponentManager::flushPendingRemovals() {
     for (auto &[actor, key] : pendingRemovals) {
-        actor->getComponentsMap().erase(key);
+        actor->removeComponentByKey(key);
     }
     pendingRemovals.clear();
 }

@@ -4,9 +4,9 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I/Users/kimh2/Documents/Uni/game_engine/src/firstParty -I/Users/kimh2/Documents/Uni/game_engine/src/thirdParty -I/Users/kimh2/Documents/Uni/game_engine/src/thirdParty/rapidjson/include -I/Users/kimh2/Documents/Uni/game_engine/src/thirdParty/glm -I/Users/kimh2/Documents/Uni/game_engine/src/thirdParty/LuaBridge -I/Users/kimh2/Documents/Uni/game_engine/src/thirdParty/lua -isystem /opt/homebrew/Cellar/sdl2/2.32.8/include/SDL2 -isystem /opt/homebrew/Cellar/sdl2_image/2.8.8/include/SDL2 -isystem /opt/homebrew/Cellar/sdl2_ttf/2.24.0/include/SDL2 -isystem /opt/homebrew/Cellar/sdl2_mixer/2.8.1_1/include/SDL2
+CXX_INCLUDES = -I/Users/kimh2/Documents/Uni/game_engine/src/firstParty -I/Users/kimh2/Documents/Uni/game_engine/src/thirdParty -I/Users/kimh2/Documents/Uni/game_engine/src/thirdParty/glm -I/Users/kimh2/Documents/Uni/game_engine/src/thirdParty/LuaBridge -I/Users/kimh2/Documents/Uni/game_engine/src/thirdParty/lua -isystem /Users/kimh2/Documents/Uni/game_engine/src/thirdParty/rapidjson/include -isystem /opt/homebrew/Cellar/sdl2/2.32.8/include/SDL2 -isystem /opt/homebrew/Cellar/sdl2_image/2.8.8/include/SDL2 -isystem /opt/homebrew/Cellar/sdl2_ttf/2.24.0/include/SDL2 -isystem /opt/homebrew/Cellar/sdl2_mixer/2.8.1_1/include/SDL2
 
-CXX_FLAGSarm64 = -std=c++17 -arch arm64 -Wall -Wextra -O3 -stdlib=libc++
+CXX_FLAGSarm64 = -g -std=c++17 -arch arm64 -Wall -Wextra -O3 -stdlib=libc++
 
-CXX_FLAGS = -std=c++17 -arch arm64 -Wall -Wextra -O3 -stdlib=libc++
+CXX_FLAGS = -g -std=c++17 -arch arm64 -Wall -Wextra -O3 -stdlib=libc++
 

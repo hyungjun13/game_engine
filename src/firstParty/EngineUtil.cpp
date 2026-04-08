@@ -4,11 +4,37 @@
 #include "Renderer.hpp"
 #include "SceneLoader.hpp"
 
+#include "rapidjson/filereadstream.h"
+
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <string>
+
+void EngineUtil::ReadJsonFile(const std::string &path, rapidjson::Document &out_document) {
+    FILE *file_pointer = nullptr;
+#ifdef _WIN32
+    fopen_s(&file_pointer, path.c_str(), "rb");
+#else
+    file_pointer = fopen(path.c_str(), "rb");
+#endif
+
+    if (file_pointer == nullptr) {
+        std::cout << "error parsing json at [" << path << "]" << '\n';
+        exit(0);
+    }
+
+    char                      buffer[65536];
+    rapidjson::FileReadStream stream(file_pointer, buffer, sizeof(buffer));
+    out_document.ParseStream(stream);
+    std::fclose(file_pointer);
+
+    if (out_document.HasParseError()) {
+        std::cout << "error parsing json at [" << path << "]" << '\n';
+        exit(0);
+    }
+}
 
 void EngineUtil::startup() {
 
@@ -92,6 +118,7 @@ void EngineUtil::startup() {
     }
 
     std::string initial_scene = document["initial_scene"].GetString();
+    Engine::SetCurrentScene(initial_scene);
 
     std::string scene_path = "resources/scenes/" + initial_scene + ".scene";
 

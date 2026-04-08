@@ -35,6 +35,7 @@ struct imageDrawRequest {
 
 struct textRequest {
     std::string text;
+    std::string fontName;
     int         fontSize;
     SDL_Color   color;
     int         x;
@@ -78,6 +79,12 @@ class Engine {
     static void renderImages();
     static void renderActor(Actor &actor);
     static void renderTexts();
+    static void QueueTextDraw(const std::string &text,
+                              int                x,
+                              int                y,
+                              const std::string &fontName,
+                              int                fontSize,
+                              const SDL_Color   &color);
 
     static void addTextureToCache(std::string name, SDL_Texture *texture);
 
@@ -113,9 +120,7 @@ class Engine {
 
     static void updateActors();
 
-    static std::unordered_map<std::string, SDL_Texture *> *getTextureCache() {
-        return &textureCache;
-    }
+    static std::unordered_map<std::string, SDL_Texture *> *getTextureCache();
 
     static luabridge::LuaRef Find(const std::string &name);
 
@@ -126,6 +131,11 @@ class Engine {
     static luabridge::LuaRef Instantiate(const std::string &templateName);
 
     static void DestroyActor(Actor *actor);
+
+    static void        LoadScene(const std::string &sceneName);
+    static std::string GetCurrentScene();
+    static void        SetCurrentScene(const std::string &sceneName);
+    static void        DontDestroyActor(Actor *actor);
 
   private:
     inline static const int UNIT = 100;
@@ -163,9 +173,10 @@ class Engine {
     inline static bool endFlag      = false;
     inline static bool newSceneFlag = false;
 
-    inline static std::string newScene = "";
+    inline static std::string newScene     = "";
+    inline static std::string currentScene = "";
 
-    inline static bool findActorInVector(std::vector<Actor *> actors, Actor *actor);
+    static bool findActorInVector(std::vector<Actor *> actors, Actor *actor);
 
     // inline static std::vector<Actor> masterActorList;
 
@@ -181,14 +192,7 @@ class Engine {
 
     inline static std::unordered_map<std::string, SDL_Texture *> textTextureCache;
 
-    // Helper function to generate a unique key for text.
-    inline static std::string generateTextKey(const std::string &text, int fontSize, const SDL_Color &color) {
-        return text + "_" + std::to_string(fontSize) + "_" +
-               std::to_string(color.r) + "_" +
-               std::to_string(color.g) + "_" +
-               std::to_string(color.b) + "_" +
-               std::to_string(color.a);
-    }
+    static std::string generateTextKey(const std::string &text, int fontSize, const SDL_Color &color);
 
     inline static int currentFrame = 0;
 

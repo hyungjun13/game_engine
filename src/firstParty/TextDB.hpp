@@ -4,29 +4,33 @@
 #include "SDL2_ttf/SDL_ttf.h"
 
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 class TextDB {
   public:
-    static void check();
-    // static void loadIntroText();
+    static void      check();
+    static void      loadIntroText();
+    static TTF_Font *GetFontByNameSize(const std::string &fontName, int fontSize);
+    static void      Draw(const std::string &strContent,
+                          float              x,
+                          float              y,
+                          const std::string &fontName,
+                          float              fontSize,
+                          float              r,
+                          float              g,
+                          float              b,
+                          float              a);
 
-    // inline static std::string getIntroText(int index);
+    static std::vector<std::string> &getIntroTextCache();
 
-    // inline static std::vector<std::string> &getIntroTextCache() {
-    //     return introTextCache;
-    // }
+    static void setFont(TTF_Font *f);
 
-    inline static void setFont(TTF_Font *f) {
-        font = f;
-    }
-
-    inline static TTF_Font *getFont() {
-        return font;
-    }
+    static TTF_Font *getFont();
 
   private:
     inline static std::unordered_map<std::string, std::unordered_map<int, TTF_Font *>> fontCache;
+    inline static std::vector<std::string>                                             introTextCache;
 
     inline static TTF_Font *font = nullptr;
 };

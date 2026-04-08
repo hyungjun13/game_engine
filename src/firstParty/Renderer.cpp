@@ -6,8 +6,30 @@
 #include "Renderer.hpp"
 #include "rapidjson/document.h"
 
+std::string Renderer::game_title;
+
 void Renderer::init() {
 
     window   = Helper::SDL_CreateWindow(Engine::getGameTitle().c_str(), 0, 0, Engine::getXResolution(), Engine::getYResolution(), SDL_WINDOW_SHOWN);
     renderer = Helper::SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
+}
+
+void Renderer::setGameTitle(std::string title) {
+    game_title = title;
+}
+
+SDL_Renderer *Renderer::getRenderer() {
+    return renderer;
+}
+
+void Renderer::setRenderer(SDL_Renderer *r) {
+    renderer = r;
+}
+
+SDL_Window *Renderer::getWindow() {
+    return window;
+}
+
+void Renderer::setWindow(SDL_Window *w) {
+    window = w;
 }

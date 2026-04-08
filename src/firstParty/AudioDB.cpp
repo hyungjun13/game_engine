@@ -4,6 +4,42 @@
 #include "rapidjson/document.h"
 
 #include <filesystem>
+#include <iostream>
+
+Mix_Chunk *AudioDB::getIntroBGM() {
+    return introBGM;
+}
+
+Mix_Chunk *AudioDB::getAudio(std::string audioName) {
+    auto it = audioCache.find(audioName);
+    if (it == audioCache.end()) {
+        return nullptr;
+    }
+    return it->second;
+}
+
+std::array<Mix_Chunk *, 2> AudioDB::getOutroAudioCache() {
+    return outroAudioCache;
+}
+
+std::string AudioDB::getScoreSFXPath() {
+    return scoreSFX;
+}
+
+void AudioDB::loadSoundEffect(std::string audioName) {
+    if (audioCache.find(audioName) == audioCache.end()) {
+        if (!std::filesystem::exists("resources/audio/" + audioName + ".wav") && !std::filesystem::exists("resources/audio/" + audioName + ".ogg")) {
+            std::cout << "error: failed to play audio clip " << audioName;
+            exit(0);
+        }
+
+        if (std::filesystem::exists("resources/audio/" + audioName + ".wav")) {
+            audioCache[audioName] = AudioHelper::Mix_LoadWAV(("resources/audio/" + audioName + ".wav").c_str());
+        } else {
+            audioCache[audioName] = AudioHelper::Mix_LoadWAV(("resources/audio/" + audioName + ".ogg").c_str());
+        }
+    }
+}
 
 void AudioDB::init() {
     // read the game.config file
@@ -45,4 +81,22 @@ void AudioDB::init() {
             scoreSFX                 = scoreSFXPath;
         }
     }
+}
+
+void AudioDB::Play(int channel, const std::string &clipName, bool doesLoop) {
+    loadSoundEffect(clipName);
+    Mix_Chunk *chunk = getAudio(clipName);
+    if (chunk == nullptr) {
+        return;
+    }
+    AudioHelper::Mix_PlayChannel(channel, chunk, doesLoop ? -1 : 0);
+}
+
+void AudioDB::Halt(int channel) {
+    AudioHelper::Mix_HaltChannel(channel);
+}
+
+void AudioDB::SetVolume(int channel, float volume) {
+    int volumeInt = static_cast<int>(volume);
+    AudioHelper::Mix_Volume(channel, volumeInt);
 }

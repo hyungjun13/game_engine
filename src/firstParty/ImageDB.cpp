@@ -1,4 +1,5 @@
 #include "ImageDB.hpp"
+#include "Engine.hpp"
 #include "EngineUtil.hpp"
 #include "Helper.h"
 #include "Renderer.hpp"
@@ -7,8 +8,33 @@
 #include "SDL_image/SDL_image.h"
 #include "rapidjson/document.h"
 
+#include <algorithm>
 #include <filesystem>
 #include <unordered_map>
+
+namespace {
+constexpr int PIXELS_PER_METER = 100;
+
+int clampByte(int value) {
+    if (value < 0)
+        return 0;
+    if (value > 255)
+        return 255;
+    return value;
+}
+
+bool compare_image_requests(const ImageDrawRequest &a, const ImageDrawRequest &b) {
+    return a.sorting_order < b.sorting_order;
+}
+} // namespace
+
+std::vector<SDL_Texture *> &ImageDB::getIntroImageCache() {
+    return introImageCache;
+}
+
+std::array<SDL_Texture *, 2> &ImageDB::getOutroImageCache() {
+    return outroImageCache;
+}
 
 void ImageDB::check() {
     /*When the game begins, the user may want to display some intro screen images.
@@ -80,4 +106,105 @@ Print error: player actor requires an hp_image be defined
 
     if (Engine::getHasPlayer()) {
     }
+}
+
+SDL_Texture *ImageDB::getImage(std::string imageName) {
+    auto it = imageCache.find(imageName);
+    if (it != imageCache.end()) {
+        return it->second;
+    }
+
+    std::string imagePath = "resources/images/" + imageName + ".png";
+    if (!std::filesystem::exists(imagePath)) {
+        std::cout << "error: missing image " << imageName;
+        exit(0);
+    }
+
+    SDL_Texture *texture = IMG_LoadTexture(Renderer::getRenderer(), imagePath.c_str());
+    if (!texture) {
+        std::cout << "error: missing image " << imageName;
+        exit(0);
+    }
+
+    imageCache[imageName] = texture;
+    return texture;
+}
+
+void ImageDB::Draw(const std::string &imageName,
+                   float              x,
+                   float              y,
+                   float              rotationDegrees,
+                   float              scaleX,
+                   float              scaleY,
+                   float              pivotX,
+                   float              pivotY,
+                   float              r,
+                   float              g,
+                   float              b,
+                   float              a,
+                   float              sortingOrder) {
+    ImageDrawRequest request;
+    request.image_name       = imageName;
+    request.x                = x;
+    request.y                = y;
+    request.rotation_degrees = static_cast<int>(rotationDegrees);
+    request.scale_x          = scaleX;
+    request.scale_y          = scaleY;
+    request.pivot_x          = pivotX;
+    request.pivot_y          = pivotY;
+    request.r                = clampByte(static_cast<int>(r));
+    request.g                = clampByte(static_cast<int>(g));
+    request.b                = clampByte(static_cast<int>(b));
+    request.a                = clampByte(static_cast<int>(a));
+    request.sorting_order    = static_cast<int>(sortingOrder);
+
+    imageDrawQueue.push_back(request);
+}
+
+void ImageDB::RenderAndClearAllImages() {
+    std::stable_sort(imageDrawQueue.begin(), imageDrawQueue.end(), compare_image_requests);
+
+    float zoomFactor = Engine::getZoomFactor();
+    SDL_RenderSetScale(Renderer::getRenderer(), zoomFactor, zoomFactor);
+
+    for (auto &request : imageDrawQueue) {
+        SDL_Texture *tex = getImage(request.image_name);
+
+        SDL_Rect texRect;
+        SDL_QueryTexture(tex, nullptr, nullptr, &texRect.w, &texRect.h);
+
+        int flipMode = SDL_FLIP_NONE;
+        if (request.scale_x < 0.0f) {
+            flipMode |= SDL_FLIP_HORIZONTAL;
+        }
+        if (request.scale_y < 0.0f) {
+            flipMode |= SDL_FLIP_VERTICAL;
+        }
+
+        float xScale = std::abs(request.scale_x);
+        float yScale = std::abs(request.scale_y);
+
+        texRect.w = static_cast<int>(texRect.w * xScale);
+        texRect.h = static_cast<int>(texRect.h * yScale);
+
+        SDL_Point pivotPoint = {
+            static_cast<int>(request.pivot_x * texRect.w),
+            static_cast<int>(request.pivot_y * texRect.h)};
+
+        glm::vec2 finalRenderingPosition = glm::vec2(request.x, request.y) - Engine::getCameraPosition();
+
+        texRect.x = static_cast<int>(finalRenderingPosition.x * PIXELS_PER_METER + Engine::getXResolution() * 0.5f * (1.0f / zoomFactor) - pivotPoint.x);
+        texRect.y = static_cast<int>(finalRenderingPosition.y * PIXELS_PER_METER + Engine::getYResolution() * 0.5f * (1.0f / zoomFactor) - pivotPoint.y);
+
+        SDL_SetTextureColorMod(tex, static_cast<Uint8>(request.r), static_cast<Uint8>(request.g), static_cast<Uint8>(request.b));
+        SDL_SetTextureAlphaMod(tex, static_cast<Uint8>(request.a));
+
+        SDL_RenderCopyEx(Renderer::getRenderer(), tex, nullptr, &texRect, request.rotation_degrees, &pivotPoint, static_cast<SDL_RendererFlip>(flipMode));
+
+        SDL_SetTextureColorMod(tex, 255, 255, 255);
+        SDL_SetTextureAlphaMod(tex, 255);
+    }
+
+    SDL_RenderSetScale(Renderer::getRenderer(), 1.0f, 1.0f);
+    imageDrawQueue.clear();
 }

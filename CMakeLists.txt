@@ -1,35 +1,31 @@
 cmake_minimum_required(VERSION 3.10)
-project(GameEngine LANGUAGES CXX)
+project(GameEngine LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD       17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS     OFF)
 
-# Tell CMake to look in our vendored cmake-config dirs first
-# list(APPEND CMAKE_PREFIX_PATH
-#   "${CMAKE_SOURCE_DIR}/src/thirdParty/SDL2"
-#   "${CMAKE_SOURCE_DIR}/src/thirdParty/SDL_image"
-#   "${CMAKE_SOURCE_DIR}/src/thirdParty/SDL2_ttf"
-#   "${CMAKE_SOURCE_DIR}/src/thirdParty/SDL2_mixer"
-# )
+# Tell CMake to look in vendored cmake-config dirs first.
+list(APPEND CMAKE_PREFIX_PATH
+  "${CMAKE_SOURCE_DIR}/src/thirdParty/SDL2"
+  "${CMAKE_SOURCE_DIR}/src/thirdParty/SDL_image"
+  "${CMAKE_SOURCE_DIR}/src/thirdParty/SDL2_ttf"
+  "${CMAKE_SOURCE_DIR}/src/thirdParty/SDL2_mixer"
+)
 
 # 1) Build Lua
 add_subdirectory(src/thirdParty/lua)
 
- if(WIN32)
-   list(APPEND CMAKE_PREFIX_PATH
-     "${CMAKE_SOURCE_DIR}/src/thirdParty/SDL2"
-     "${CMAKE_SOURCE_DIR}/src/thirdParty/SDL_image"
-     "${CMAKE_SOURCE_DIR}/src/thirdParty/SDL2_ttf"
-     "${CMAKE_SOURCE_DIR}/src/thirdParty/SDL2_mixer"
-   )
- endif()
+if(APPLE)
+  # Homebrew config packages are commonly installed here on Apple Silicon.
+  list(APPEND CMAKE_PREFIX_PATH "/opt/homebrew")
+endif()
 
 # 2) Find all of our SDL2 & friends via the provided SDL2Config.cmake files
-find_package(SDL2       REQUIRED)    # provides SDL2::SDL2 & SDL2::SDL2main
-find_package(SDL2_image REQUIRED)    # provides SDL2_image::SDL2_image
-find_package(SDL2_ttf   REQUIRED)    # provides SDL2_ttf::SDL2_ttf
-find_package(SDL2_mixer REQUIRED)    # provides SDL2_mixer::SDL2_mixer
+find_package(SDL2       CONFIG REQUIRED)    # provides SDL2::SDL2 & SDL2::SDL2main
+find_package(SDL2_image CONFIG REQUIRED)    # provides SDL2_image::SDL2_image
+find_package(SDL2_ttf   CONFIG REQUIRED)    # provides SDL2_ttf::SDL2_ttf
+find_package(SDL2_mixer CONFIG REQUIRED)    # provides SDL2_mixer::SDL2_mixer
 
 # 3) Collect engine sources
 file(GLOB_RECURSE
@@ -45,10 +41,15 @@ add_executable(${PROJECT_NAME} ${GAME_ENGINE_SOURCES})
 target_include_directories(${PROJECT_NAME} PRIVATE
     src/firstParty
     src/thirdParty            # for <LuaBridge/...>, <rapidjson/...>
-    src/thirdParty/rapidjson/include
     src/thirdParty/glm
     src/thirdParty/LuaBridge
     src/thirdParty/lua        # for Lua’s headers
+)
+
+# Treat RapidJSON as a system dependency so third-party deprecation noise
+# (e.g. std::iterator in C++17 mode) does not pollute project warnings.
+target_include_directories(${PROJECT_NAME} SYSTEM BEFORE PRIVATE
+  src/thirdParty/rapidjson/include
 )
 
 # 6) Compiler flags
@@ -92,7 +93,7 @@ if (WIN32)
 
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${CMAKE_SOURCE_DIR}/resources" 
-        "$TARGET_FILE_DIR:$PROJECT_NAME}>/resources"
+        "$<TARGET_FILE_DIR:${PROJECT_NAME}>/resources"
     
   )
 endif()

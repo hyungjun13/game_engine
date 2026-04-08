@@ -3,8 +3,9 @@
 #include <glm/glm.hpp>
 #include <memory>
 #include <optional>
+#include <set>
 #include <string>
-#include <unordered_set>
+#include <unordered_map>
 
 #include "SDL2/SDL.h"
 
@@ -76,42 +77,34 @@ class Actor {
     void setViewPivotOffsetY(float y);
 
     // Add comparator
-    bool
-    operator==(const Actor &actor) const {
-        return id == actor.id;
-    }
+    bool operator==(const Actor &actor) const;
 
-    bool operator<(const Actor &actor) const {
-        return id < actor.id;
-    }
+    bool operator<(const Actor &actor) const;
 
-    bool getLastLooked() { return lastLooked; }
-    void setLastLooked(bool looked) { lastLooked = looked; }
+    bool getLastLooked();
+    void setLastLooked(bool looked);
 
     void swapActorView(std::string viewImage);
 
-    void        setDamageSFXPath(std::string path) { damageSFXPath = path; }
-    void        setStepSFXPath(std::string path) { stepSFXPath = path; }
-    void        setDialogueSFXPath(std::string path) { dialogueSFXPath = path; }
-    std::string getDamageSFXPath() { return damageSFXPath; }
-    std::string getStepSFXPath() { return stepSFXPath; }
-    std::string getDialogueSFXPath() { return dialogueSFXPath; }
+    void        setDamageSFXPath(std::string path);
+    void        setStepSFXPath(std::string path);
+    void        setDialogueSFXPath(std::string path);
+    std::string getDamageSFXPath();
+    std::string getStepSFXPath();
+    std::string getDialogueSFXPath();
 
-    void setHasSpoken(bool hasSpoken) { this->hasSpoken = hasSpoken; }
-    bool getHasSpoken() { return hasSpoken; }
+    void setHasSpoken(bool hasSpoken);
+    bool getHasSpoken();
 
-    void addComponent(std::string name, std::shared_ptr<luabridge::LuaRef> component) {
-        components[name] = component;
-    }
+    void addComponent(const std::string &name, std::shared_ptr<luabridge::LuaRef> component);
 
-    std::shared_ptr<luabridge::LuaRef> getComponent(std::string name) {
-        return components[name];
-    }
+    std::shared_ptr<luabridge::LuaRef> getComponent(const std::string &name);
+
+    void removeComponentByKey(const std::string &key);
+
     std::unordered_map<std::string, std::shared_ptr<luabridge::LuaRef>> &getComponentsMap();
 
-    void injectConveninenceReferences(std::shared_ptr<luabridge::LuaRef> component) {
-        (*component)["actor"] = this;
-    }
+    void injectConveninenceReferences(std::shared_ptr<luabridge::LuaRef> component);
 
     luabridge::LuaRef getComponentByKey(std::string key);
     luabridge::LuaRef GetComponent(std::string typeName);
@@ -119,8 +112,11 @@ class Actor {
     luabridge::LuaRef AddComponent(std::string type_name);
     void              RemoveComponent(const luabridge::LuaRef &component);
 
-    void markDestroyed() { destroyed = true; }
-    bool isDestroyed() const { return destroyed; }
+    void markDestroyed();
+    bool isDestroyed() const;
+
+    void setDontDestroyOnLoad(bool value);
+    bool getDontDestroyOnLoad() const;
 
   private:
     int                id                         = -1;
@@ -153,5 +149,8 @@ class Actor {
 
     bool destroyed = false; // used to mark the actor for destruction
 
+    bool dontDestroyOnLoad = false;
+
     std::unordered_map<std::string, std::shared_ptr<luabridge::LuaRef>> components;
+    std::unordered_map<std::string, std::set<std::string>>              componentKeysByType;
 };

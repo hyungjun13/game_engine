@@ -2,46 +2,27 @@
 
 #include "AudioHelper.h"
 #include "SDL2_mixer/SDL_mixer.h"
+
 #include <array>
-#include <filesystem>
-#include <iostream>
 #include <string>
 #include <unordered_map>
 
 class AudioDB {
   public:
     static void init();
+    static void Play(int channel, const std::string &clipName, bool doesLoop);
+    static void Halt(int channel);
+    static void SetVolume(int channel, float volume);
 
-    static inline Mix_Chunk *getIntroBGM() {
-        return introBGM;
-    }
+    static Mix_Chunk *getIntroBGM();
 
-    static inline Mix_Chunk *getAudio(std::string audioName) {
-        return audioCache[audioName];
-    }
+    static Mix_Chunk *getAudio(std::string audioName);
 
-    static inline std::array<Mix_Chunk *, 2> getOutroAudioCache() {
-        return outroAudioCache;
-    }
+    static std::array<Mix_Chunk *, 2> getOutroAudioCache();
 
-    static inline std::string getScoreSFXPath() {
-        return scoreSFX;
-    }
+    static std::string getScoreSFXPath();
 
-    static inline void loadSoundEffect(std::string audioName) {
-        if (audioCache.find(audioName) == audioCache.end()) {
-            if (!std::filesystem::exists("resources/audio/" + audioName + ".wav") && !std::filesystem::exists("resources/audio/" + audioName + ".ogg")) {
-                std::cout << "error: failed to play audio clip " << audioName;
-                exit(0);
-            }
-
-            if (std::filesystem::exists("resources/audio/" + audioName + ".wav")) {
-                audioCache[audioName] = AudioHelper::Mix_LoadWAV(("resources/audio/" + audioName + ".wav").c_str());
-            } else {
-                audioCache[audioName] = AudioHelper::Mix_LoadWAV(("resources/audio/" + audioName + ".ogg").c_str());
-            }
-        }
-    }
+    static void loadSoundEffect(std::string audioName);
 
   private:
     inline static std::string introBGMPath;

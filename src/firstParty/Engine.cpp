@@ -58,6 +58,31 @@ uint32_t floatToUint32(float f) {
     return converter.i;
 }
 
+std::unordered_map<std::string, SDL_Texture *> *Engine::getTextureCache() {
+    return &textureCache;
+}
+
+std::string Engine::generateTextKey(const std::string &text, int fontSize, const SDL_Color &color) {
+    return text + "_" + std::to_string(fontSize) + "_" +
+           std::to_string(color.r) + "_" +
+           std::to_string(color.g) + "_" +
+           std::to_string(color.b) + "_" +
+           std::to_string(color.a);
+}
+
+namespace {
+void queueActorForUpdatesOnly(const std::shared_ptr<Actor> &actor) {
+    for (const auto &pair : actor->getComponentsMap()) {
+        if (((*pair.second)["OnUpdate"]).isFunction()) {
+            ComponentManager::QueueOnUpdate(actor->getId(), pair.second);
+        }
+        if (((*pair.second)["OnLateUpdate"]).isFunction()) {
+            ComponentManager::QueueOnLateUpdate(actor->getId(), pair.second);
+        }
+    }
+}
+} // namespace
+
 void Engine::GameLoop() {
 
     Input::Init();
@@ -98,6 +123,46 @@ void Engine::Update() {
         running = false;
     }
 
+    if (newSceneFlag) {
+        std::vector<std::shared_ptr<Actor>> persistentActors;
+        persistentActors.reserve(masterActorList.size());
+
+        for (auto &actor : masterActorList) {
+            if (actor->getDontDestroyOnLoad() && !actor->isDestroyed()) {
+                persistentActors.push_back(actor);
+            }
+        }
+
+        ComponentManager::ResetLifecycleQueues();
+        masterActorList = persistentActors;
+
+        for (const auto &actor : masterActorList) {
+            queueActorForUpdatesOnly(actor);
+        }
+
+        std::string scenePath = "resources/scenes/" + newScene + ".scene";
+        if (!std::filesystem::exists(scenePath)) {
+            std::cout << "error: scene " << newScene << " is missing";
+            exit(0);
+        }
+
+        SceneLoader::loadActors(scenePath);
+        for (auto &actor : SceneLoader::loadedActors) {
+            Engine::addActor(actor);
+        }
+
+        hasPlayer = false;
+        for (const auto &actor : masterActorList) {
+            if (actor->getName() == "player") {
+                hasPlayer = true;
+                break;
+            }
+        }
+
+        currentScene = newScene;
+        newSceneFlag = false;
+    }
+
     flushPendingActors();
 
     ComponentManager::flushPending();
@@ -122,21 +187,6 @@ void Engine::Render() {
                            Engine::getClearedColorB(), 255);
     SDL_RenderClear(Renderer::getRenderer());
 
-    if (newSceneFlag) {
-        masterActorList.clear();
-
-        std::string scenePath = "resources/scenes/" + newScene + ".scene";
-        if (!std::filesystem::exists(scenePath)) {
-            std::cout << "error: scene " << newScene << " is missing";
-            exit(0);
-        }
-        SceneLoader::loadActors(scenePath);
-        for (auto &actor : SceneLoader::loadedActors) {
-            Engine::addActor(actor);
-        }
-        newSceneFlag = false;
-    }
-
     // --- Render World with Zoom ---
     // Get the zoom factor (make sure zoomFactor is properly initialized to 1.0f by default)
     float zoom = Engine::getZoomFactor(); // e.g., from your configuration
@@ -154,7 +204,7 @@ void Engine::Render() {
 
     // Render any queued world images and texts.
     renderImages();
-    renderTexts();
+    ImageDB::RenderAndClearAllImages();
 
     // Reset scale for HUD rendering so that UI elements render at their intended size.
     SDL_RenderSetScale(Renderer::getRenderer(), 1.0f, 1.0f);
@@ -234,6 +284,7 @@ void Engine::RenderIntro() {
 
             textRequest request;
             request.text     = textCache[introTextIndex];
+            request.fontName = "";
             request.fontSize = 16;
             request.color    = {255, 255, 255, 255};
             request.x        = 25;
@@ -243,6 +294,7 @@ void Engine::RenderIntro() {
         } else {
             textRequest request;
             request.text     = textCache[textCache.size() - 1];
+            request.fontName = "";
             request.fontSize = 16;
             request.color    = {255, 255, 255, 255};
             request.x        = 25;
@@ -272,7 +324,8 @@ void Engine::renderDialogue() {
     for (auto &actor : dialogueActors) {
         textRequest request;
 
-        request.text = actor->getNearbyDialogue();
+        request.text     = actor->getNearbyDialogue();
+        request.fontName = "";
 
         request.fontSize = 16;
         request.color    = {255, 255, 255, 255};
@@ -355,8 +408,26 @@ void Engine::renderImages() {
 
 void Engine::renderTexts() {
     for (auto &request : textDrawQueue) {
-        SDL_Surface *surface = TTF_RenderText_Solid(TextDB::getFont(), request.text.c_str(), request.color);
+        TTF_Font *font = nullptr;
+        if (!request.fontName.empty()) {
+            font = TextDB::GetFontByNameSize(request.fontName, request.fontSize);
+        } else {
+            font = TextDB::getFont();
+        }
+
+        if (!font) {
+            continue;
+        }
+
+        SDL_Surface *surface = TTF_RenderText_Solid(font, request.text.c_str(), request.color);
+        if (!surface) {
+            continue;
+        }
         SDL_Texture *texture = SDL_CreateTextureFromSurface(Renderer::getRenderer(), surface);
+        if (!texture) {
+            SDL_FreeSurface(surface);
+            continue;
+        }
 
         SDL_FRect dstrect;
         dstrect.x = request.x;
@@ -370,6 +441,22 @@ void Engine::renderTexts() {
         SDL_DestroyTexture(texture);
     }
     textDrawQueue.clear();
+}
+
+void Engine::QueueTextDraw(const std::string &text,
+                           int                x,
+                           int                y,
+                           const std::string &fontName,
+                           int                fontSize,
+                           const SDL_Color   &color) {
+    textRequest request;
+    request.text     = text;
+    request.fontName = fontName;
+    request.fontSize = fontSize;
+    request.color    = color;
+    request.x        = x;
+    request.y        = y;
+    textDrawQueue.push_back(request);
 }
 
 void Engine::renderHUDQueue() {
@@ -707,6 +794,26 @@ void Engine::DestroyActor(Actor *actor) {
 
     // 2) schedule the actor itself for removal
     pendingActorDestroys.push_back(actor);
+}
+
+void Engine::LoadScene(const std::string &sceneName) {
+    newScene     = sceneName;
+    newSceneFlag = true;
+}
+
+std::string Engine::GetCurrentScene() {
+    return currentScene;
+}
+
+void Engine::SetCurrentScene(const std::string &sceneName) {
+    currentScene = sceneName;
+}
+
+void Engine::DontDestroyActor(Actor *actor) {
+    if (!actor) {
+        return;
+    }
+    actor->setDontDestroyOnLoad(true);
 }
 
 void Engine::flushPendingActorDestroys() {
