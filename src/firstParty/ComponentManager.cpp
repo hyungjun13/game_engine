@@ -177,6 +177,9 @@ void ComponentManager::InitializeFunctions() {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("Image")
         .addFunction("Draw", &ImageDB::Draw)
+        .addFunction("DrawEx", &ImageDB::Draw)
+        .addFunction("DrawUI", &ImageDB::DrawUI)
+        .addFunction("DrawUIEx", &ImageDB::DrawUIEx)
         .endNamespace();
 
     luabridge::getGlobalNamespace(L)

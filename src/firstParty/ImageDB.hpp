@@ -43,6 +43,17 @@ class ImageDB {
                              float              b,
                              float              a,
                              float              sortingOrder);
+    static void         DrawUI(const std::string &imageName,
+                               float              x,
+                               float              y);
+    static void         DrawUIEx(const std::string &imageName,
+                                 float              x,
+                                 float              y,
+                                 float              r,
+                                 float              g,
+                                 float              b,
+                                 float              a,
+                                 float              sortingOrder);
     static void         RenderAndClearAllImages();
 
     static std::vector<SDL_Texture *> &getIntroImageCache();

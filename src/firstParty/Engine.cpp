@@ -459,14 +459,60 @@ void Engine::QueueTextDraw(const std::string &text,
     textDrawQueue.push_back(request);
 }
 
+void Engine::QueueHUDImageDraw(SDL_Texture *texture,
+                               float        x,
+                               float        y,
+                               int          r,
+                               int          g,
+                               int          b,
+                               int          a,
+                               int          sortingOrder) {
+    if (texture == nullptr) {
+        return;
+    }
+
+    imageDrawRequest request;
+    request.texture      = texture;
+    request.srcrect      = nullptr;
+    request.r            = r;
+    request.g            = g;
+    request.b            = b;
+    request.a            = a;
+    request.sortingOrder = sortingOrder;
+
+    float texW = 0.0f;
+    float texH = 0.0f;
+    Helper::SDL_QueryTexture(texture, &texW, &texH);
+
+    request.dstrect.x = x;
+    request.dstrect.y = y;
+    request.dstrect.w = texW;
+    request.dstrect.h = texH;
+
+    imageDrawQueueHUD.push_back(request);
+}
+
 void Engine::renderHUDQueue() {
 
+    std::stable_sort(imageDrawQueueHUD.begin(), imageDrawQueueHUD.end(), [](const imageDrawRequest &a, const imageDrawRequest &b) {
+        return a.sortingOrder < b.sortingOrder;
+    });
+
     for (auto &request : imageDrawQueueHUD) {
+        SDL_SetTextureColorMod(request.texture,
+                               static_cast<Uint8>(request.r),
+                               static_cast<Uint8>(request.g),
+                               static_cast<Uint8>(request.b));
+        SDL_SetTextureAlphaMod(request.texture, static_cast<Uint8>(request.a));
+
         if (request.srcrect != nullptr) {
             Helper::SDL_RenderCopy(Renderer::getRenderer(), request.texture, request.srcrect, &request.dstrect);
         } else {
             Helper::SDL_RenderCopy(Renderer::getRenderer(), request.texture, nullptr, &request.dstrect);
         }
+
+        SDL_SetTextureColorMod(request.texture, 255, 255, 255);
+        SDL_SetTextureAlphaMod(request.texture, 255);
     }
     imageDrawQueueHUD.clear();
 

@@ -30,7 +30,12 @@ struct imageDrawRequest {
     SDL_Texture *texture;
     SDL_FRect   *srcrect;
     SDL_FRect    dstrect;
-    Actor       *actor = nullptr;
+    Actor       *actor        = nullptr;
+    int          r            = 255;
+    int          g            = 255;
+    int          b            = 255;
+    int          a            = 255;
+    int          sortingOrder = 0;
 };
 
 struct textRequest {
@@ -108,6 +113,14 @@ class Engine {
     static float getZoomFactor();
 
     static void renderHUDQueue();
+    static void QueueHUDImageDraw(SDL_Texture *texture,
+                                  float        x,
+                                  float        y,
+                                  int          r,
+                                  int          g,
+                                  int          b,
+                                  int          a,
+                                  int          sortingOrder);
 
     static void  setPlayerSpeed(float speed);
     static float getPlayerSpeed();

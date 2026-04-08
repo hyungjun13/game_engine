@@ -161,6 +161,32 @@ void ImageDB::Draw(const std::string &imageName,
     imageDrawQueue.push_back(request);
 }
 
+void ImageDB::DrawUI(const std::string &imageName,
+                     float              x,
+                     float              y) {
+    DrawUIEx(imageName, x, y, 255.0f, 255.0f, 255.0f, 255.0f, 0.0f);
+}
+
+void ImageDB::DrawUIEx(const std::string &imageName,
+                       float              x,
+                       float              y,
+                       float              r,
+                       float              g,
+                       float              b,
+                       float              a,
+                       float              sortingOrder) {
+    SDL_Texture *texture = getImage(imageName);
+
+    Engine::QueueHUDImageDraw(texture,
+                              x,
+                              y,
+                              clampByte(static_cast<int>(r)),
+                              clampByte(static_cast<int>(g)),
+                              clampByte(static_cast<int>(b)),
+                              clampByte(static_cast<int>(a)),
+                              static_cast<int>(sortingOrder));
+}
+
 void ImageDB::RenderAndClearAllImages() {
     std::stable_sort(imageDrawQueue.begin(), imageDrawQueue.end(), compare_image_requests);
 
