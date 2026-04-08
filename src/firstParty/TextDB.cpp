@@ -1,9 +1,23 @@
 #include "TextDB.hpp"
+#include "Engine.hpp"
 #include "EngineUtil.hpp"
 #include "SDL2_ttf/SDL_ttf.h"
 #include "rapidjson/document.h"
 
 #include <filesystem>
+#include <iostream>
+
+std::vector<std::string> &TextDB::getIntroTextCache() {
+    return introTextCache;
+}
+
+void TextDB::setFont(TTF_Font *f) {
+    font = f;
+}
+
+TTF_Font *TextDB::getFont() {
+    return font;
+}
 
 void TextDB::check() {
     TTF_Init();
@@ -60,4 +74,50 @@ All text will render at (25, height-50) where  height is the window height.
             introTextCache.push_back(request.text);
         }
     }
+}
+
+TTF_Font *TextDB::GetFontByNameSize(const std::string &fontName, int fontSize) {
+    auto fontIt = fontCache.find(fontName);
+    if (fontIt != fontCache.end()) {
+        auto sizeIt = fontIt->second.find(fontSize);
+        if (sizeIt != fontIt->second.end()) {
+            return sizeIt->second;
+        }
+    }
+
+    std::string fontPath = "resources/fonts/" + fontName + ".ttf";
+    if (!std::filesystem::exists(fontPath)) {
+        std::cout << "error: font " << fontName << " missing";
+        exit(0);
+    }
+
+    TTF_Font *loadedFont = TTF_OpenFont(fontPath.c_str(), fontSize);
+    if (!loadedFont) {
+        std::cout << "error: font " << fontName << " missing";
+        exit(0);
+    }
+
+    fontCache[fontName][fontSize] = loadedFont;
+    return loadedFont;
+}
+
+void TextDB::Draw(const std::string &strContent,
+                  float              x,
+                  float              y,
+                  const std::string &fontName,
+                  float              fontSize,
+                  float              r,
+                  float              g,
+                  float              b,
+                  float              a) {
+    int       x_i        = static_cast<int>(x);
+    int       y_i        = static_cast<int>(y);
+    int       fontSize_i = static_cast<int>(fontSize);
+    int       r_i        = static_cast<int>(r);
+    int       g_i        = static_cast<int>(g);
+    int       b_i        = static_cast<int>(b);
+    int       a_i        = static_cast<int>(a);
+    SDL_Color color      = {static_cast<Uint8>(r_i), static_cast<Uint8>(g_i), static_cast<Uint8>(b_i), static_cast<Uint8>(a_i)};
+
+    Engine::QueueTextDraw(strContent, x_i, y_i, fontName, fontSize_i, color);
 }

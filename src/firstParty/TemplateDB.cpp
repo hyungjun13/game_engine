@@ -65,9 +65,10 @@ void TemplateDB::loadTemplate(std::string templateName, Actor &actor) {
 
             luabridge::LuaRef instance = luabridge::newTable(L);
             ComponentManager::EstablishInheritance(instance, baseComponent);
-            instance["key"]     = compKey;
-            instance["type"]    = compType;
-            instance["enabled"] = true;
+            instance["key"]        = compKey;
+            instance["type"]       = compType;
+            instance["enabled"]    = true;
+            instance["hasStarted"] = false;
 
             // Process any default properties from the template.
             for (rapidjson::Value::ConstMemberIterator propItr = compObj.MemberBegin();

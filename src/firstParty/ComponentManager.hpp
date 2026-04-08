@@ -1,6 +1,7 @@
 #pragma once
 
 #include "lua.hpp"
+#include <algorithm>
 #include <memory>
 #include <queue>
 #include <string>
@@ -46,47 +47,19 @@ class ComponentManager {
 
     static int DebugLog(lua_State *L);
 
-    static bool IsComponentLoaded(const std::string &componentName) {
-        return loadedComponentCache.find(componentName) != loadedComponentCache.end();
-    }
+    static bool IsComponentLoaded(const std::string &componentName);
 
-    static std::shared_ptr<luabridge::LuaRef> GetComponent(const std::string &componentName) {
-        return loadedComponentCache[componentName];
-    }
+    static std::shared_ptr<luabridge::LuaRef> GetComponent(const std::string &componentName);
 
-    static void addComponentToCache(const std::string &componentName, std::shared_ptr<luabridge::LuaRef> component) {
-        loadedComponentCache[componentName] = component;
-    }
+    static void addComponentToCache(const std::string &componentName, std::shared_ptr<luabridge::LuaRef> component);
 
-    static void setLuaState(lua_State *luaState) {
-        L = luaState;
-    }
+    static void setLuaState(lua_State *luaState);
 
-    static lua_State *getLuaState() {
-        return L;
-    }
+    static lua_State *getLuaState();
 
-    static void ReportError(const std::string &actor_name, const luabridge::LuaException &e) {
-        std::string error_message = e.what();
+    static void ReportError(const std::string &actor_name, const luabridge::LuaException &e);
 
-        std::replace(error_message.begin(), error_message.end(), '\\', '/');
-
-        std::cout << "\033[31m" << actor_name << " : " << error_message << "\033[0m" << std::endl;
-    }
-
-    static void sortQueues() {
-        for (auto &vec : onUpdateQueue) {
-            std::sort(vec.begin(), vec.end(), [](const std::shared_ptr<luabridge::LuaRef> &a, const std::shared_ptr<luabridge::LuaRef> &b) {
-                return (*a)["key"].cast<std::string>() < (*b)["key"].cast<std::string>();
-            });
-        }
-
-        for (auto &vec : onLateUpdateQueue) {
-            std::sort(vec.begin(), vec.end(), [](const std::shared_ptr<luabridge::LuaRef> &a, const std::shared_ptr<luabridge::LuaRef> &b) {
-                return (*a)["key"].cast<std::string>() < (*b)["key"].cast<std::string>();
-            });
-        }
-    }
+    static void sortQueues();
 
     static void Quit();
     static void Sleep(int milliseconds);
@@ -99,6 +72,8 @@ class ComponentManager {
                                          std::string       key,
                                          luabridge::LuaRef inst);
     static void flushPending(); // call at start of next frame
+
+    static void ResetLifecycleQueues();
 
     static void scheduleComponentRemoval(Actor *actor, std::string key);
 

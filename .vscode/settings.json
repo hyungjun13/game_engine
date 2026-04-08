@@ -1,5 +1,10 @@
 {
     "files.associations": {
         "vector": "cpp"
-    }
+    },
+    "cmake.buildDirectory": "${workspaceFolder}/cmakeBuild",
+    "cmake.useCMakePresets": "always",
+    "cmake.configurePreset": "default",
+    "cmake.buildPreset": "default",
+    "cmake.generator": "Unix Makefiles"
 }

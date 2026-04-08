@@ -26,6 +26,33 @@ float        Actor::getTransformRotationDegrees() { return transform_rotation_de
 glm::vec2    Actor::getViewPivotOffset() { return view_pivot_offset; }
 int          Actor::getRenderOrder() const { return renderOrder.value_or(transform_position.y); }
 bool         Actor::getMovementBounce() { return movementBounce; }
+
+bool Actor::operator==(const Actor &actor) const { return id == actor.id; }
+bool Actor::operator<(const Actor &actor) const { return id < actor.id; }
+
+bool Actor::getLastLooked() { return lastLooked; }
+void Actor::setLastLooked(bool looked) { lastLooked = looked; }
+
+void        Actor::setDamageSFXPath(std::string path) { damageSFXPath = path; }
+void        Actor::setStepSFXPath(std::string path) { stepSFXPath = path; }
+void        Actor::setDialogueSFXPath(std::string path) { dialogueSFXPath = path; }
+std::string Actor::getDamageSFXPath() { return damageSFXPath; }
+std::string Actor::getStepSFXPath() { return stepSFXPath; }
+std::string Actor::getDialogueSFXPath() { return dialogueSFXPath; }
+
+void Actor::setHasSpoken(bool spoken) { hasSpoken = spoken; }
+bool Actor::getHasSpoken() { return hasSpoken; }
+
+void Actor::injectConveninenceReferences(std::shared_ptr<luabridge::LuaRef> component) {
+    (*component)["actor"] = this;
+}
+
+void Actor::markDestroyed() { destroyed = true; }
+bool Actor::isDestroyed() const { return destroyed; }
+
+void Actor::setDontDestroyOnLoad(bool value) { dontDestroyOnLoad = value; }
+bool Actor::getDontDestroyOnLoad() const { return dontDestroyOnLoad; }
+
 // Setters
 void Actor::setId(int id) { this->id = id; }
 void Actor::setName(std::string name) { this->name = name; }
@@ -79,13 +106,69 @@ void Actor::swapActorView(std::string viewImage) {
 std::unordered_map<std::string, std::shared_ptr<luabridge::LuaRef>> &Actor::getComponentsMap() {
     return components;
 }
+
+void Actor::addComponent(const std::string &name, std::shared_ptr<luabridge::LuaRef> component) {
+    if (!component) {
+        return;
+    }
+
+    auto existingIt = components.find(name);
+    if (existingIt != components.end() && existingIt->second) {
+        std::string existingType = (*existingIt->second)["type"].cast<std::string>();
+        auto        typeIt       = componentKeysByType.find(existingType);
+        if (typeIt != componentKeysByType.end()) {
+            typeIt->second.erase(name);
+            if (typeIt->second.empty()) {
+                componentKeysByType.erase(typeIt);
+            }
+        }
+    }
+
+    components[name] = component;
+
+    std::string typeName = (*component)["type"].cast<std::string>();
+    componentKeysByType[typeName].insert(name);
+}
+
+std::shared_ptr<luabridge::LuaRef> Actor::getComponent(const std::string &name) {
+    auto it = components.find(name);
+    if (it == components.end()) {
+        return nullptr;
+    }
+    return it->second;
+}
+
+void Actor::removeComponentByKey(const std::string &key) {
+    auto componentIt = components.find(key);
+    if (componentIt == components.end()) {
+        return;
+    }
+
+    if (componentIt->second) {
+        std::string typeName = (*(componentIt->second))["type"].cast<std::string>();
+        auto        typeIt   = componentKeysByType.find(typeName);
+        if (typeIt != componentKeysByType.end()) {
+            typeIt->second.erase(key);
+            if (typeIt->second.empty()) {
+                componentKeysByType.erase(typeIt);
+            }
+        }
+    }
+
+    components.erase(componentIt);
+}
+
 luabridge::LuaRef Actor::AddComponent(std::string type_name) {
-    lua_State *L = ComponentManager::getLuaState();
+    lua_State *L             = ComponentManager::getLuaState();
+    auto       baseComponent = ComponentManager::GetComponent(type_name);
+    if (!baseComponent) {
+        return luabridge::LuaRef(L);
+    }
 
     // 1) new Lua table
     luabridge::LuaRef inst = luabridge::newTable(L); //
     ComponentManager::EstablishInheritance(
-        inst, *ComponentManager::GetComponent(type_name));
+        inst, *baseComponent);
 
     // 2) set built-ins.
     inst["type"]       = type_name;
@@ -109,61 +192,45 @@ luabridge::LuaRef Actor::AddComponent(std::string type_name) {
 }
 
 luabridge::LuaRef Actor::getComponentByKey(std::string key) { //
-    if (components.find(key) != components.end()) {
-        return *(components[key]);
-    } else {
-        return luabridge::LuaRef(ComponentManager::getLuaState());
+    auto it = components.find(key);
+    if (it != components.end()) {
+        return *(it->second);
     }
+    return luabridge::LuaRef(ComponentManager::getLuaState());
 }
 
 luabridge::LuaRef Actor::GetComponent(std::string typeName) {
-    std::vector<std::string> matchingKeys;
-    for (const auto &pair : components) {
-        // Check if the component's "type" field equals typeName.
-        if (((*pair.second)["type"]).cast<std::string>() == typeName) {
-            matchingKeys.push_back(pair.first);
-        }
-    }
-
-    // If no matching components found, return nil.
-    if (matchingKeys.empty()) {
+    auto typeIt = componentKeysByType.find(typeName);
+    if (typeIt == componentKeysByType.end() || typeIt->second.empty()) {
         return luabridge::LuaRef(ComponentManager::getLuaState());
     }
 
-    // Sort the keys lexicographically.
-    std::sort(matchingKeys.begin(), matchingKeys.end());
-
-    // Return the component corresponding to the lexicographically smallest key.
-    return *(components.at(matchingKeys[0]));
+    const std::string &smallestKey = *(typeIt->second.begin());
+    return *(components.at(smallestKey));
 }
 
 luabridge::LuaRef Actor::GetComponents(std::string typeName) {
     // Get the Lua state (assumes ComponentManager::getLuaState() returns it)
     lua_State *L = ComponentManager::getLuaState();
     // Create a new table
-    luabridge::LuaRef        resultTable = luabridge::newTable(L);
-    std::vector<std::string> matchingKeys;
+    luabridge::LuaRef resultTable = luabridge::newTable(L);
+    auto              typeIt      = componentKeysByType.find(typeName);
 
-    // Collect keys for components with a matching "type" field .
-    for (const auto &pair : components) {
-        // Make sure the "type" field exists and cast it to string.
-        // This works if you explicitly set instance["type"] when creating the component.
-        if (((*pair.second)["type"]).cast<std::string>() == typeName) {
-            matchingKeys.push_back(pair.first);
-        }
+    if (typeIt == componentKeysByType.end()) {
+        return resultTable;
     }
-
-    // Sort the keys lexicographically.
-    std::sort(matchingKeys.begin(), matchingKeys.end());
 
     // Insert each matching component into the Lua table with Lua indexing (starting at 1).
     int index = 1;
-    for (const auto &key : matchingKeys) {
-        resultTable[index] = *components[key];
+    for (const auto &key : typeIt->second) {
+        auto componentIt = components.find(key);
+        if (componentIt == components.end()) {
+            continue;
+        }
+        resultTable[index] = *(componentIt->second);
         index++;
     }
 
-    // If no components matched, the table will be empty.
     return resultTable;
 }
 
@@ -173,7 +240,7 @@ void Actor::RemoveComponent(const luabridge::LuaRef &component) {
 
     // disable right away so Update/LateUpdate skip it
     component["enabled"] = false;
-    components.erase(key);
+    removeComponentByKey(key);
 
     // ask ComponentManager to erase it when safe
     ComponentManager::scheduleComponentRemoval(this, key);

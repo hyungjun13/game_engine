@@ -10,25 +10,15 @@ class Renderer {
   public:
     static void init();
 
-    static void setGameTitle(std::string title) {
-        game_title = title;
-    }
+    static void setGameTitle(std::string title);
 
-    static SDL_Renderer *getRenderer() {
-        return renderer;
-    }
+    static SDL_Renderer *getRenderer();
 
-    static void setRenderer(SDL_Renderer *r) {
-        renderer = r;
-    }
+    static void setRenderer(SDL_Renderer *r);
 
-    static SDL_Window *getWindow() {
-        return window;
-    }
+    static SDL_Window *getWindow();
 
-    static void setWindow(SDL_Window *w) {
-        window = w;
-    }
+    static void setWindow(SDL_Window *w);
 
   private:
     inline static SDL_Window   *window   = nullptr;
