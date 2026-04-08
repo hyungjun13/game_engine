@@ -1,6 +1,0 @@
-/Users/kimh2/Documents/Uni/game_engine/cmakeBuild/CMakeFiles/GameEngine.dir
-/Users/kimh2/Documents/Uni/game_engine/cmakeBuild/CMakeFiles/edit_cache.dir
-/Users/kimh2/Documents/Uni/game_engine/cmakeBuild/CMakeFiles/rebuild_cache.dir
-/Users/kimh2/Documents/Uni/game_engine/cmakeBuild/src/thirdParty/lua/CMakeFiles/lua.dir
-/Users/kimh2/Documents/Uni/game_engine/cmakeBuild/src/thirdParty/lua/CMakeFiles/edit_cache.dir
-/Users/kimh2/Documents/Uni/game_engine/cmakeBuild/src/thirdParty/lua/CMakeFiles/rebuild_cache.dir

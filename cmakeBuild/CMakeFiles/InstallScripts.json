@@ -1,8 +1,0 @@
-{
-	"InstallScripts" : 
-	[
-		"/Users/kimh2/Documents/Uni/game_engine/cmakeBuild/cmake_install.cmake",
-		"/Users/kimh2/Documents/Uni/game_engine/cmakeBuild/src/thirdParty/lua/cmake_install.cmake"
-	],
-	"Parallel" : false
-}
