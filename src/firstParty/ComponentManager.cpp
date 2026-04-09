@@ -3,15 +3,195 @@
 #include "Engine.hpp"
 #include "ImageDB.hpp"
 #include "Input.hpp"
+#include "Rigidbody.hpp"
 #include "TextDB.hpp"
+#include "box2d/b2_fixture.h"
+#include "box2d/b2_math.h"
+#include "box2d/b2_world_callbacks.h"
 
+#include <algorithm>
+#include <cstdint>
 #include <filesystem>
 #include <iostream>
 #include <thread>
+#include <vector>
 
 #include "Helper.h"
 
 namespace {
+struct RaycastHit {
+    Actor *actor      = nullptr;
+    b2Vec2 point      = b2Vec2(0.0f, 0.0f);
+    b2Vec2 normal     = b2Vec2(0.0f, 0.0f);
+    bool   is_trigger = false;
+    float  fraction   = 0.0f;
+};
+
+bool IsPhantomFixture(b2Fixture *fixture) {
+    if (fixture == nullptr) {
+        return true;
+    }
+
+    b2Filter filter = fixture->GetFilterData();
+    return filter.maskBits == 0x0000;
+}
+
+Actor *ActorFromFixtureUserData(b2Fixture *fixture) {
+    if (fixture == nullptr) {
+        return nullptr;
+    }
+
+    uintptr_t pointer = fixture->GetUserData().pointer;
+    if (pointer == 0) {
+        return nullptr;
+    }
+
+    return reinterpret_cast<Actor *>(pointer);
+}
+
+luabridge::LuaRef MakeHitResultTable(lua_State *L, const RaycastHit &hit) {
+    luabridge::LuaRef result = luabridge::newTable(L);
+    result["actor"]          = hit.actor;
+    result["point"]          = hit.point;
+    result["normal"]         = hit.normal;
+    result["is_trigger"]     = hit.is_trigger;
+    return result;
+}
+
+class PhysicsRaycastClosestCallback : public b2RayCastCallback {
+  public:
+    float ReportFixture(b2Fixture    *fixture,
+                        const b2Vec2 &point,
+                        const b2Vec2 &normal,
+                        float         fraction) override {
+        if (IsPhantomFixture(fixture)) {
+            return -1.0f;
+        }
+
+        Actor *actor = ActorFromFixtureUserData(fixture);
+        if (actor == nullptr) {
+            return -1.0f;
+        }
+
+        if (!has_hit_ || fraction < best_hit_.fraction) {
+            best_hit_.actor      = actor;
+            best_hit_.point      = point;
+            best_hit_.normal     = normal;
+            best_hit_.is_trigger = fixture->IsSensor();
+            best_hit_.fraction   = fraction;
+            has_hit_             = true;
+        }
+
+        return best_hit_.fraction;
+    }
+
+    bool HasHit() const {
+        return has_hit_;
+    }
+
+    const RaycastHit &GetHit() const {
+        return best_hit_;
+    }
+
+  private:
+    RaycastHit best_hit_;
+    bool       has_hit_ = false;
+};
+
+class PhysicsRaycastAllCallback : public b2RayCastCallback {
+  public:
+    float ReportFixture(b2Fixture    *fixture,
+                        const b2Vec2 &point,
+                        const b2Vec2 &normal,
+                        float         fraction) override {
+        if (IsPhantomFixture(fixture)) {
+            return -1.0f;
+        }
+
+        Actor *actor = ActorFromFixtureUserData(fixture);
+        if (actor == nullptr) {
+            return -1.0f;
+        }
+
+        RaycastHit hit;
+        hit.actor      = actor;
+        hit.point      = point;
+        hit.normal     = normal;
+        hit.is_trigger = fixture->IsSensor();
+        hit.fraction   = fraction;
+        hits_.push_back(hit);
+
+        return 1.0f;
+    }
+
+    const std::vector<RaycastHit> &GetHits() const {
+        return hits_;
+    }
+
+  private:
+    std::vector<RaycastHit> hits_;
+};
+
+luabridge::LuaRef PhysicsRaycast(const b2Vec2 &pos, const b2Vec2 &dir, float dist) {
+    lua_State *L = ComponentManager::getLuaState();
+
+    if (dist <= 0.0f || dir.LengthSquared() <= 0.0f || !Rigidbody::HasWorld()) {
+        return luabridge::LuaRef(L);
+    }
+
+    b2World *world = Rigidbody::GetWorld();
+    if (world == nullptr) {
+        return luabridge::LuaRef(L);
+    }
+
+    b2Vec2 normalized_dir = dir;
+    normalized_dir.Normalize();
+    b2Vec2 ray_end = pos + dist * normalized_dir;
+
+    PhysicsRaycastClosestCallback callback;
+    world->RayCast(&callback, pos, ray_end);
+
+    if (!callback.HasHit()) {
+        return luabridge::LuaRef(L);
+    }
+
+    return MakeHitResultTable(L, callback.GetHit());
+}
+
+luabridge::LuaRef PhysicsRaycastAll(const b2Vec2 &pos, const b2Vec2 &dir, float dist) {
+    lua_State        *L       = ComponentManager::getLuaState();
+    luabridge::LuaRef results = luabridge::newTable(L);
+
+    if (dist <= 0.0f || dir.LengthSquared() <= 0.0f || !Rigidbody::HasWorld()) {
+        return results;
+    }
+
+    b2World *world = Rigidbody::GetWorld();
+    if (world == nullptr) {
+        return results;
+    }
+
+    b2Vec2 normalized_dir = dir;
+    normalized_dir.Normalize();
+    b2Vec2 ray_end = pos + dist * normalized_dir;
+
+    PhysicsRaycastAllCallback callback;
+    world->RayCast(&callback, pos, ray_end);
+
+    std::vector<RaycastHit> hits = callback.GetHits();
+    std::sort(hits.begin(), hits.end(), [](const RaycastHit &a, const RaycastHit &b) {
+        return a.fraction < b.fraction;
+    });
+
+    int index = 1;
+    for (const RaycastHit &hit : hits) {
+        results[index] = MakeHitResultTable(L, hit);
+        index++;
+    }
+
+    return results;
+}
+
 void CameraSetPosition(float x, float y) {
     Engine::setCameraPosition(glm::vec2(x, y));
 }
@@ -55,6 +235,65 @@ std::string SceneGetCurrent() {
 void SceneDontDestroy(Actor *actor) {
     Engine::DontDestroyActor(actor);
 }
+
+std::string MakeDestroyToken(Actor *actor, const std::string &key) {
+    return std::to_string(reinterpret_cast<uintptr_t>(actor)) + ":" + key;
+}
+
+void DestroyRigidbodyBodyImmediatelyIfNeeded(const luabridge::LuaRef &instance) {
+    if (!instance.isUserdata()) {
+        return;
+    }
+
+    luabridge::LuaRef type_ref = instance["type"];
+    if (!type_ref.isString() || type_ref.cast<std::string>() != "Rigidbody") {
+        return;
+    }
+
+    try {
+        Rigidbody *rb = instance.cast<Rigidbody *>();
+        if (rb != nullptr) {
+            rb->OnDestroy();
+        }
+    } catch (const luabridge::LuaException &) {
+        return;
+    }
+}
+
+bool LuaRefsRawEqual(const luabridge::LuaRef &a, const luabridge::LuaRef &b) {
+    lua_State *L = ComponentManager::getLuaState();
+    if (L == nullptr) {
+        return false;
+    }
+
+    a.push(L);
+    b.push(L);
+    bool equal = lua_rawequal(L, -1, -2) != 0;
+    lua_pop(L, 2);
+    return equal;
+}
+
+std::string GetActorNameFromComponent(const luabridge::LuaRef &component) {
+    if (!(component.isTable() || component.isUserdata())) {
+        return "<event>";
+    }
+
+    luabridge::LuaRef actor_ref = component["actor"];
+    if (!actor_ref.isUserdata()) {
+        return "<event>";
+    }
+
+    try {
+        Actor *actor = actor_ref.cast<Actor *>();
+        if (actor != nullptr) {
+            return actor->getName();
+        }
+    } catch (const luabridge::LuaException &) {
+        return "<event>";
+    }
+
+    return "<event>";
+}
 } // namespace
 
 void ComponentManager::Initialize() {
@@ -73,6 +312,118 @@ std::shared_ptr<luabridge::LuaRef> ComponentManager::GetComponent(const std::str
         return nullptr;
     }
     return it->second;
+}
+
+bool ComponentManager::IsCppComponentType(const std::string &componentName) {
+    return componentName == "Rigidbody";
+}
+
+bool ComponentManager::IsLuaComponentType(const std::string &componentName) {
+    return !IsCppComponentType(componentName);
+}
+
+luabridge::LuaRef ComponentManager::CreateCppComponent(const std::string &componentName) {
+    lua_State        *L           = getLuaState();
+    luabridge::LuaRef constructor = luabridge::getGlobal(L, componentName.c_str());
+    if (constructor.isNil()) {
+        return luabridge::LuaRef(L);
+    }
+
+    // LuaBridge class registrations are callable via __call and are typically tables,
+    // so do not require a strict function type check here.
+    try {
+        return constructor();
+    } catch (const luabridge::LuaException &) {
+        return luabridge::LuaRef(L);
+    }
+}
+
+luabridge::LuaRef ComponentManager::CloneCppComponent(const luabridge::LuaRef &baseComponent) {
+    lua_State *L = getLuaState();
+
+    if (!baseComponent.isUserdata()) {
+        return luabridge::LuaRef(L);
+    }
+
+    std::string       typeName = baseComponent["type"].cast<std::string>();
+    luabridge::LuaRef clone    = CreateCppComponent(typeName);
+    if (clone.isNil()) {
+        return luabridge::LuaRef(L);
+    }
+
+    if (typeName == "Rigidbody") {
+        auto *src = baseComponent.cast<Rigidbody *>();
+        auto *dst = clone.cast<Rigidbody *>();
+        if (src == nullptr || dst == nullptr) {
+            return luabridge::LuaRef(L);
+        }
+        *dst = *src;
+        return clone;
+    }
+
+    return luabridge::LuaRef(L);
+}
+
+std::shared_ptr<luabridge::LuaRef> ComponentManager::GetOrLoadComponentPrototype(const std::string &componentName) {
+    auto existing = GetComponent(componentName);
+    if (existing) {
+        return existing;
+    }
+
+    lua_State *L = getLuaState();
+
+    if (IsCppComponentType(componentName)) {
+        luabridge::LuaRef instance = CreateCppComponent(componentName);
+        if (instance.isNil()) {
+            return nullptr;
+        }
+
+        auto compPtr = std::make_shared<luabridge::LuaRef>(instance);
+        addComponentToCache(componentName, compPtr);
+        return compPtr;
+    }
+
+    std::string luaComponentPath = "resources/component_types/" + componentName + ".lua";
+    if (!std::filesystem::exists(luaComponentPath)) {
+        return nullptr;
+    }
+
+    int loadStatus = luaL_dofile(L, luaComponentPath.c_str());
+    if (loadStatus != LUA_OK) {
+        std::cout << "problem with lua file " << componentName;
+        exit(0);
+    }
+
+    luabridge::LuaRef component = luabridge::getGlobal(L, componentName.c_str());
+    if (!component.isTable()) {
+        std::cout << "error: component " << componentName << " is not a valid table";
+        exit(0);
+    }
+
+    auto compPtr = std::make_shared<luabridge::LuaRef>(component);
+    addComponentToCache(componentName, compPtr);
+    return compPtr;
+}
+
+luabridge::LuaRef ComponentManager::InstantiateComponent(const std::string &componentName) {
+    lua_State *L = getLuaState();
+
+    auto baseComponent = GetOrLoadComponentPrototype(componentName);
+    if (!baseComponent) {
+        return luabridge::LuaRef(L);
+    }
+
+    if (baseComponent->isTable()) {
+        luabridge::LuaRef instance = luabridge::newTable(L);
+        EstablishInheritance(instance, *baseComponent);
+        return instance;
+    }
+
+    if (baseComponent->isUserdata()) {
+        return CloneCppComponent(*baseComponent);
+    }
+
+    return luabridge::LuaRef(L);
 }
 
 void ComponentManager::addComponentToCache(const std::string &componentName, std::shared_ptr<luabridge::LuaRef> component) {
@@ -121,11 +472,23 @@ void ComponentManager::InitializeFunctions() {
         .addFunction("Log", &ComponentManager::DebugLog)
         .endNamespace();
 
-    // Example registration for glm::vec2 and  Actor remains the same.
+    // Existing glm::vec2 binding used by current camera/input APIs.
     luabridge::getGlobalNamespace(L)
         .beginClass<glm::vec2>("vec2")
         .addData("x", &glm::vec2::x)
         .addData("y", &glm::vec2::y)
+        .endClass();
+
+    // Suite 0 Vector2 API backed by Box2D's b2Vec2.
+    luabridge::getGlobalNamespace(L)
+        .beginClass<b2Vec2>("Vector2")
+        .addConstructor<void (*)(float, float)>()
+        .addData("x", &b2Vec2::x)
+        .addData("y", &b2Vec2::y)
+        .addFunction("__add", &b2Vec2::operator_add)
+        .addFunction("__sub", &b2Vec2::operator_sub)
+        .addFunction("__mul", &b2Vec2::operator_mul)
+        .addStaticFunction("Dot", static_cast<float (*)(const b2Vec2 &, const b2Vec2 &)>(&b2Dot))
         .endClass();
     //
     luabridge::getGlobalNamespace(L)
@@ -137,6 +500,80 @@ void ComponentManager::InitializeFunctions() {
         .addFunction("GetComponents", &Actor::GetComponents)
         .addFunction("AddComponent", &Actor::AddComponent)
         .addFunction("RemoveComponent", &Actor::RemoveComponent)
+        .endClass();
+
+    luabridge::getGlobalNamespace(L)
+        .beginClass<CollisionInfo>("Collision")
+        .addData("other", &CollisionInfo::other)
+        .addData("point", &CollisionInfo::point)
+        .addData("relative_velocity", &CollisionInfo::relative_velocity)
+        .addData("normal", &CollisionInfo::normal)
+        .endClass();
+
+    luabridge::getGlobalNamespace(L)
+        .beginClass<Rigidbody>("Rigidbody")
+        .addConstructor<void (*)(void)>()
+        .addFunction("OnStart", &Rigidbody::OnStart)
+        .addFunction("OnUpdate", &Rigidbody::OnUpdate)
+        .addFunction("OnLateUpdate", &Rigidbody::OnLateUpdate)
+        .addFunction("OnDestroy", &Rigidbody::OnDestroy)
+        .addFunction("GetPosition", &Rigidbody::GetPosition)
+        .addFunction("GetRotation", &Rigidbody::GetRotation)
+        .addFunction("GetVelocity", &Rigidbody::GetVelocity)
+        .addFunction("GetAngularVelocity", &Rigidbody::GetAngularVelocity)
+        .addFunction("GetUpDirection", &Rigidbody::GetUpDirection)
+        .addFunction("GetRightDirection", &Rigidbody::GetRightDirection)
+        .addFunction("SetPosition", &Rigidbody::SetPosition)
+        .addFunction("SetPositionX", &Rigidbody::SetPositionX)
+        .addFunction("SetPositionY", &Rigidbody::SetPositionY)
+        .addFunction("SetRotation", &Rigidbody::SetRotation)
+        .addFunction("SetVelocity", &Rigidbody::SetVelocity)
+        .addFunction("SetVelocityX", &Rigidbody::SetVelocityX)
+        .addFunction("SetVelocityY", &Rigidbody::SetVelocityY)
+        .addFunction("SetAngularVelocity", &Rigidbody::SetAngularVelocity)
+        .addFunction("SetGravityScale", &Rigidbody::SetGravityScale)
+        .addFunction("SetUpDirection", &Rigidbody::SetUpDirection)
+        .addFunction("SetRightDirection", &Rigidbody::SetRightDirection)
+        .addFunction("AddForce", &Rigidbody::AddForce)
+        .addData("key", &Rigidbody::key)
+        .addData("type", &Rigidbody::type)
+        .addData("enabled", &Rigidbody::enabled)
+        .addData("hasStarted", &Rigidbody::hasStarted)
+        .addData("actor", &Rigidbody::actor)
+        // Suite #1 canonical property names.
+        .addData("x", &Rigidbody::x)
+        .addData("y", &Rigidbody::y)
+        .addData("body_type", &Rigidbody::body_type)
+        .addData("precise", &Rigidbody::precise)
+        .addData("gravity_scale", &Rigidbody::gravity_scale)
+        .addData("density", &Rigidbody::density)
+        .addData("collider_type", &Rigidbody::collider_type)
+        .addData("width", &Rigidbody::width)
+        .addData("height", &Rigidbody::height)
+        .addData("radius", &Rigidbody::radius)
+        .addData("friction", &Rigidbody::friction)
+        .addData("bounciness", &Rigidbody::bounciness)
+        .addData("angular_friction", &Rigidbody::angular_friction)
+        .addData("rotation", &Rigidbody::rotation)
+        .addData("has_collider", &Rigidbody::has_collider)
+        .addData("has_trigger", &Rigidbody::has_trigger)
+        .addData("trigger_type", &Rigidbody::trigger_type)
+        .addData("trigger_width", &Rigidbody::trigger_width)
+        .addData("trigger_height", &Rigidbody::trigger_height)
+        .addData("trigger_radius", &Rigidbody::trigger_radius)
+        // Backward-compatible aliases.
+        .addData("bodyType", &Rigidbody::body_type)
+        .addData("bullet", &Rigidbody::precise)
+        .addData("gravityScale", &Rigidbody::gravity_scale)
+        .addData("angularDamping", &Rigidbody::angular_friction)
+        .addData("colliderType", &Rigidbody::collider_type)
+        .addData("collider_width", &Rigidbody::width)
+        .addData("collider_height", &Rigidbody::height)
+        .addData("restitution", &Rigidbody::bounciness)
+        .addData("trigger", &Rigidbody::has_trigger)
+        .addData("triggerType", &Rigidbody::trigger_type)
+        .addData("velocityX", &Rigidbody::velocityX)
+        .addData("velocityY", &Rigidbody::velocityY)
         .endClass();
 
     luabridge::getGlobalNamespace(L)
@@ -180,6 +617,7 @@ void ComponentManager::InitializeFunctions() {
         .addFunction("DrawEx", &ImageDB::Draw)
         .addFunction("DrawUI", &ImageDB::DrawUI)
         .addFunction("DrawUIEx", &ImageDB::DrawUIEx)
+        .addFunction("DrawPixel", &ImageDB::DrawPixel)
         .endNamespace();
 
     luabridge::getGlobalNamespace(L)
@@ -211,11 +649,34 @@ void ComponentManager::InitializeFunctions() {
         .addFunction("GetCurrent", &SceneGetCurrent)
         .addFunction("DontDestroy", &SceneDontDestroy)
         .endNamespace();
+
+    luabridge::getGlobalNamespace(L)
+        .beginNamespace("Physics")
+        .addFunction("Raycast", &PhysicsRaycast)
+        .addFunction("RaycastAll", &PhysicsRaycastAll)
+        .endNamespace();
+
+    luabridge::getGlobalNamespace(L)
+        .beginNamespace("Event")
+        .addFunction("Publish", &ComponentManager::EventPublish)
+        .addFunction("Subscribe", &ComponentManager::EventSubscribe)
+        .addFunction("Unsubscribe", &ComponentManager::EventUnsubscribe)
+        .endNamespace();
 }
 
 void ComponentManager::InitializeComponents() {
     lua_State  *L            = getLuaState();
     std::string componentDir = "resources/component_types";
+
+    // Register default native C++ component prototypes.
+    {
+        luabridge::LuaRef rigidbody = CreateCppComponent("Rigidbody");
+        if (rigidbody.isNil()) {
+            std::cout << "error: failed to construct native component Rigidbody";
+            exit(0);
+        }
+        loadedComponentCache["Rigidbody"] = std::make_shared<luabridge::LuaRef>(rigidbody);
+    }
 
     if (std::filesystem::exists(componentDir)) {
         for (const auto &entry : std::filesystem::directory_iterator(componentDir)) {
@@ -406,12 +867,11 @@ Linux : xdg-open <url>
 }
 
 luabridge::LuaRef ComponentManager::GetComponentType(std::string typeName) {
-
-    if (defaultComponents.find(typeName) != defaultComponents.end()) {
-        return *(defaultComponents[typeName]);
-    } else {
+    auto component = GetOrLoadComponentPrototype(typeName);
+    if (!component) {
         return luabridge::LuaRef(getLuaState());
     }
+    return *component;
 }
 
 void ComponentManager::scheduleRuntimeComponent(Actor            *a,
@@ -438,7 +898,6 @@ void ComponentManager::flushPending() {
                 std::make_shared<luabridge::LuaRef>(p.instance));
     }
     pendingAdds.clear();
-    flushPendingRemovals();
 }
 
 void ComponentManager::ResetLifecycleQueues() {
@@ -446,16 +905,167 @@ void ComponentManager::ResetLifecycleQueues() {
     onUpdateQueue.clear();
     onLateUpdateQueue.clear();
     pendingAdds.clear();
-    pendingRemovals.clear();
+    pendingDestroys.clear();
+    pendingDestroyTokens.clear();
+    pendingEventOps.clear();
+}
+
+void ComponentManager::EventPublish(const std::string &eventType, const luabridge::LuaRef &eventObject) {
+    auto subscribersIt = eventSubscribers.find(eventType);
+    if (subscribersIt == eventSubscribers.end()) {
+        return;
+    }
+
+    for (const EventSubscription &subscription : subscribersIt->second) {
+        if (!subscription.callback.isFunction()) {
+            continue;
+        }
+
+        try {
+            subscription.callback(subscription.component, eventObject);
+        } catch (const luabridge::LuaException &e) {
+            ReportError(GetActorNameFromComponent(subscription.component), e);
+        }
+    }
+}
+
+void ComponentManager::EventSubscribe(const std::string       &eventType,
+                                      const luabridge::LuaRef &component,
+                                      const luabridge::LuaRef &callback) {
+    if (eventType.empty() || !(component.isTable() || component.isUserdata()) || !callback.isFunction()) {
+        return;
+    }
+
+    pendingEventOps.push_back({PendingEventOpType::Subscribe, eventType, component, callback});
+}
+
+void ComponentManager::EventUnsubscribe(const std::string       &eventType,
+                                        const luabridge::LuaRef &component,
+                                        const luabridge::LuaRef &callback) {
+    if (eventType.empty() || !(component.isTable() || component.isUserdata()) || !callback.isFunction()) {
+        return;
+    }
+
+    pendingEventOps.push_back({PendingEventOpType::Unsubscribe, eventType, component, callback});
+}
+
+void ComponentManager::ProcessPendingEventSubscriptions() {
+    if (pendingEventOps.empty()) {
+        return;
+    }
+
+    for (const PendingEventOp &op : pendingEventOps) {
+        if (op.type == PendingEventOpType::Subscribe) {
+            eventSubscribers[op.eventType].push_back({op.component, op.callback, nextEventSequence++});
+            continue;
+        }
+
+        auto subscribersIt = eventSubscribers.find(op.eventType);
+        if (subscribersIt == eventSubscribers.end()) {
+            continue;
+        }
+
+        auto &subscribers = subscribersIt->second;
+        subscribers.erase(
+            std::remove_if(subscribers.begin(), subscribers.end(), [&op](const EventSubscription &sub) {
+                return LuaRefsRawEqual(sub.component, op.component) && LuaRefsRawEqual(sub.callback, op.callback);
+            }),
+            subscribers.end());
+
+        if (subscribers.empty()) {
+            eventSubscribers.erase(subscribersIt);
+        }
+    }
+
+    pendingEventOps.clear();
 }
 
 void ComponentManager::scheduleComponentRemoval(Actor *actor, std::string key) {
-    pendingRemovals.emplace_back(actor, std::move(key));
+    if (actor == nullptr) {
+        return;
+    }
+
+    auto component = actor->getComponent(key);
+    if (!component) {
+        return;
+    }
+
+    std::string token = MakeDestroyToken(actor, key);
+    if (pendingDestroyTokens.find(token) != pendingDestroyTokens.end()) {
+        return;
+    }
+
+    (*component)["enabled"] = false;
+    DestroyRigidbodyBodyImmediatelyIfNeeded(*component);
+
+    pendingDestroyTokens.insert(token);
+    pendingDestroys.push_back({actor, std::move(key), *component});
 }
 
 void ComponentManager::flushPendingRemovals() {
-    for (auto &[actor, key] : pendingRemovals) {
-        actor->removeComponentByKey(key);
+    std::sort(pendingDestroys.begin(), pendingDestroys.end(), [](const PendingComponent &a, const PendingComponent &b) {
+        if (a.actor != b.actor) {
+            return a.actor < b.actor;
+        }
+        return a.key < b.key;
+    });
+
+    for (auto &entry : pendingDestroys) {
+        if (entry.actor == nullptr) {
+            continue;
+        }
+
+        luabridge::LuaRef on_destroy = entry.instance["OnDestroy"];
+        if (!on_destroy.isFunction()) {
+            continue;
+        }
+
+        try {
+            on_destroy(entry.instance);
+        } catch (const luabridge::LuaException &e) {
+            ComponentManager::ReportError(entry.actor->getName(), e);
+        }
     }
-    pendingRemovals.clear();
+
+    for (auto &entry : pendingDestroys) {
+        if (entry.actor == nullptr) {
+            continue;
+        }
+        entry.actor->removeComponentByKey(entry.key);
+        removeEventSubscriptionsForComponent(entry.instance);
+    }
+
+    pendingDestroys.clear();
+    pendingDestroyTokens.clear();
+}
+
+void ComponentManager::removeEventSubscriptionsForComponent(const luabridge::LuaRef &component) {
+    for (auto it = eventSubscribers.begin(); it != eventSubscribers.end();) {
+        auto &subscribers = it->second;
+
+        subscribers.erase(
+            std::remove_if(subscribers.begin(), subscribers.end(), [&component](const EventSubscription &sub) {
+                return LuaRefsRawEqual(sub.component, component);
+            }),
+            subscribers.end());
+
+        if (subscribers.empty()) {
+            it = eventSubscribers.erase(it);
+        } else {
+            ++it;
+        }
+    }
+
+    pendingEventOps.erase(
+        std::remove_if(pendingEventOps.begin(), pendingEventOps.end(), [&component](const PendingEventOp &op) {
+            return LuaRefsRawEqual(op.component, component);
+        }),
+        pendingEventOps.end());
+}
+
+void ComponentManager::ProcessOnDestroy() {
+    if (pendingDestroys.empty()) {
+        return;
+    }
+    flushPendingRemovals();
 }

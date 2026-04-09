@@ -34,16 +34,16 @@ void initialize() {
     TextDB::loadIntroText();
 
     AudioDB::init();
-
 }
 
 int main(int argc, char *argv[]) {
 
+    (void)argc;
+    (void)argv;
+
     // startup()
 
     initialize();
-
-    
 
     Engine::GameLoop();
 

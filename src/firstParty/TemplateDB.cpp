@@ -44,27 +44,18 @@ void TemplateDB::loadTemplate(std::string templateName, Actor &actor) {
             }
             std::string compType = compObj["type"].GetString();
 
-            std::string luaComponentPath = "resources/component_types/" + compType + ".lua";
-            if (!std::filesystem::exists(luaComponentPath)) {
+            auto componentPrototype = ComponentManager::GetOrLoadComponentPrototype(compType);
+            if (!componentPrototype) {
                 std::cout << "error: failed to locate component " << compType;
                 exit(0);
             }
 
-            lua_State *L          = ComponentManager::getLuaState();
-            int        loadStatus = luaL_dofile(L, luaComponentPath.c_str());
-            if (loadStatus != LUA_OK) {
-                std::cout << "problem with lua file " << compType;
+            luabridge::LuaRef instance = ComponentManager::InstantiateComponent(compType);
+            if (instance.isNil()) {
+                std::cout << "error: failed to instantiate component " << compType;
                 exit(0);
             }
 
-            luabridge::LuaRef baseComponent = luabridge::getGlobal(L, compType.c_str());
-            if (!baseComponent.isTable()) {
-                std::cout << "error: component " << compType << " is not a valid table";
-                exit(0);
-            }
-
-            luabridge::LuaRef instance = luabridge::newTable(L);
-            ComponentManager::EstablishInheritance(instance, baseComponent);
             instance["key"]        = compKey;
             instance["type"]       = compType;
             instance["enabled"]    = true;

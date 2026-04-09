@@ -24,6 +24,15 @@ struct ImageDrawRequest {
     int         sorting_order;
 };
 
+struct PixelDrawRequest {
+    int x;
+    int y;
+    int r;
+    int g;
+    int b;
+    int a;
+};
+
 class ImageDB {
   public:
     static void         check();
@@ -54,7 +63,14 @@ class ImageDB {
                                  float              b,
                                  float              a,
                                  float              sortingOrder);
+    static void         DrawPixel(float x,
+                                  float y,
+                                  float r,
+                                  float g,
+                                  float b,
+                                  float a);
     static void         RenderAndClearAllImages();
+    static void         RenderAndClearAllPixels();
 
     static std::vector<SDL_Texture *> &getIntroImageCache();
 
@@ -67,4 +83,5 @@ class ImageDB {
     inline static std::array<SDL_Texture *, 2>                   outroImageCache = {nullptr, nullptr}; // [0] = game over, [1] = win
     inline static std::unordered_map<std::string, SDL_Texture *> imageCache;
     inline static std::vector<ImageDrawRequest>                  imageDrawQueue;
+    inline static std::vector<PixelDrawRequest>                  pixelDrawQueue;
 };

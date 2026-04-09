@@ -21,6 +21,7 @@
 #include "ImageDB.hpp"
 #include "Input.hpp"
 #include "Renderer.hpp"
+#include "Rigidbody.hpp"
 #include "SDL2/SDL.h"
 #include "SDL2_ttf/SDL_ttf.h"
 #include "SceneLoader.hpp"
@@ -81,6 +82,37 @@ void queueActorForUpdatesOnly(const std::shared_ptr<Actor> &actor) {
         }
     }
 }
+
+void SyncActorsFromRigidbodies(const std::vector<std::shared_ptr<Actor>> &actors) {
+    for (const auto &actor_sp : actors) {
+        Actor *actor = actor_sp.get();
+        if (actor == nullptr) {
+            continue;
+        }
+
+        luabridge::LuaRef rb_ref = actor->GetComponent("Rigidbody");
+        if (!rb_ref.isUserdata()) {
+            continue;
+        }
+
+        Rigidbody *rb = nullptr;
+        try {
+            rb = rb_ref.cast<Rigidbody *>();
+        } catch (const luabridge::LuaException &) {
+            continue;
+        }
+
+        if (rb == nullptr || rb->body == nullptr) {
+            continue;
+        }
+
+        b2Vec2 physics_position = rb->GetPosition();
+        float  physics_rotation = rb->GetRotation();
+
+        actor->setPosition(glm::vec2(physics_position.x, physics_position.y));
+        actor->setTransformRotationDegrees(physics_rotation);
+    }
+}
 } // namespace
 
 void Engine::GameLoop() {
@@ -124,6 +156,15 @@ void Engine::Update() {
     }
 
     if (newSceneFlag) {
+        for (auto &actor : masterActorList) {
+            if (!actor->getDontDestroyOnLoad() && !actor->isDestroyed()) {
+                DestroyActor(actor.get());
+            }
+        }
+
+        ComponentManager::ProcessOnDestroy();
+        flushPendingActorDestroys();
+
         std::vector<std::shared_ptr<Actor>> persistentActors;
         persistentActors.reserve(masterActorList.size());
 
@@ -172,10 +213,16 @@ void Engine::Update() {
     ComponentManager::ProcessOnStart();
 
     updateActors();
+
+    // Suite #1: advance physics after actor updates and before the final frame render.
+    Rigidbody::StepWorld();
+    SyncActorsFromRigidbodies(masterActorList);
 }
 
 void Engine::LateUpdate() {
     ComponentManager::ProcessOnLateUpdate();
+    ComponentManager::ProcessOnDestroy();
+    ComponentManager::ProcessPendingEventSubscriptions();
     flushPendingActorDestroys();
 }
 
@@ -187,12 +234,9 @@ void Engine::Render() {
                            Engine::getClearedColorB(), 255);
     SDL_RenderClear(Renderer::getRenderer());
 
-    // --- Render World with Zoom ---
-    // Get the zoom factor (make sure zoomFactor is properly initialized to 1.0f by default)
-    float zoom = Engine::getZoomFactor(); // e.g., from your configuration
-    SDL_RenderSetScale(Renderer::getRenderer(), zoom, zoom);
-
-    // Render world actors using the world queues (imageDrawQueue and textDrawQueue)
+    // --- Build draw requests for this frame ---
+    // World actor sprites are queued here; component-driven Draw/DrawUI/Text calls are
+    // already queued during update and will be flushed in a strict end-of-frame order.
 
     renderOrderBuffer.clear();
     renderOrderBuffer.reserve(masterActorList.size());
@@ -202,23 +246,26 @@ void Engine::Render() {
     for (Actor *a : renderOrderBuffer)
         renderActor(*a);
 
-    // Render any queued world images and texts.
-    renderImages();
-    ImageDB::RenderAndClearAllImages();
-
-    // Reset scale for HUD rendering so that UI elements render at their intended size.
-    SDL_RenderSetScale(Renderer::getRenderer(), 1.0f, 1.0f);
-
     if (getHasPlayer()) {
         renderHUD();      // Uses its own separate HUD queue.
         renderDialogue(); // Also part of the HUD/UI.
     }
 
+    // --- Flush queued requests in the required deterministic order ---
+    // 1) scene-space images: Image.Draw / Image.DrawEx (plus actor world sprites)
+    SDL_RenderSetScale(Renderer::getRenderer(), Engine::getZoomFactor(), Engine::getZoomFactor());
     renderImages();
+    ImageDB::RenderAndClearAllImages();
+
+    // 2) UI images: Image.DrawUI / Image.DrawUIEx
+    SDL_RenderSetScale(Renderer::getRenderer(), 1.0f, 1.0f);
+    renderHUDQueue();
+
+    // 3) text: Text.Draw
     renderTexts();
 
-    // Finally, render the HUD images from the separate HUD queue.
-    renderHUDQueue();
+    // 4) pixels: Image.DrawPixel
+    ImageDB::RenderAndClearAllPixels();
 
     // debug debug
     // debugDrawColliders();
@@ -244,10 +291,10 @@ void Engine::RenderIntro() {
     auto &imageCache = ImageDB::getIntroImageCache();
     auto &textCache  = TextDB::getIntroTextCache();
 
-    if (imageCache.size() > introImgIndex) {
+    if (introImgIndex >= 0 && static_cast<size_t>(introImgIndex) < imageCache.size()) {
         imageDrawRequest request;
 
-        request.texture = imageCache[introImgIndex];
+        request.texture = imageCache[static_cast<size_t>(introImgIndex)];
 
         SDL_FRect dstrect;
         dstrect.x       = 0;
@@ -280,10 +327,10 @@ void Engine::RenderIntro() {
 
     if (textCache.size() > 0) {
 
-        if (introTextIndex < textCache.size()) {
+        if (introTextIndex >= 0 && static_cast<size_t>(introTextIndex) < textCache.size()) {
 
             textRequest request;
-            request.text     = textCache[introTextIndex];
+            request.text     = textCache[static_cast<size_t>(introTextIndex)];
             request.fontName = "";
             request.fontSize = 16;
             request.color    = {255, 255, 255, 255};
@@ -318,7 +365,6 @@ void Engine::renderDialogue() {
     // Build a vector of actors with non-empty dialogue.
     std::vector<Actor *> dialogueActors;
 
-    int m = dialogueActors.size();
     int i = 0;
     // Now iterate over only those actors with dialogue.
     for (auto &actor : dialogueActors) {
@@ -441,6 +487,30 @@ void Engine::renderTexts() {
         SDL_DestroyTexture(texture);
     }
     textDrawQueue.clear();
+
+    // Render HUD text in the same phase as all other text so text is always above UI images.
+    for (auto &request : textDrawQueueHUD) {
+
+        std::string reqText     = request.text;
+        int         reqFontSize = request.fontSize;
+        SDL_Color   reqColor    = request.color;
+
+        SDL_Texture *texture = getTextTexture(reqText, reqFontSize, reqColor);
+        if (!texture)
+            continue;
+
+        SDL_FRect dstrect;
+        dstrect.x = request.x;
+        dstrect.y = request.y;
+
+        float w, h;
+        Helper::SDL_QueryTexture(texture, &w, &h);
+        dstrect.w = static_cast<float>(w);
+        dstrect.h = static_cast<float>(h);
+
+        Helper::SDL_RenderCopy(Renderer::getRenderer(), texture, nullptr, &dstrect);
+    }
+    textDrawQueueHUD.clear();
 }
 
 void Engine::QueueTextDraw(const std::string &text,
@@ -515,31 +585,6 @@ void Engine::renderHUDQueue() {
         SDL_SetTextureAlphaMod(request.texture, 255);
     }
     imageDrawQueueHUD.clear();
-
-    // Render text using cached textures.
-    for (auto &request : textDrawQueueHUD) {
-
-        std::string reqText     = request.text;
-        int         reqFontSize = request.fontSize;
-        SDL_Color   reqColor    = request.color;
-
-        SDL_Texture *texture = getTextTexture(reqText, reqFontSize, reqColor);
-        if (!texture)
-            continue; // Skip if texture creation failed
-
-        SDL_FRect dstrect;
-        dstrect.x = request.x;
-        dstrect.y = request.y;
-
-        // Query the texture for its width and height
-        float w, h;
-        Helper::SDL_QueryTexture(texture, &w, &h);
-        dstrect.w = static_cast<float>(w);
-        dstrect.h = static_cast<float>(h);
-
-        Helper::SDL_RenderCopy(Renderer::getRenderer(), texture, nullptr, &dstrect);
-    }
-    textDrawQueueHUD.clear();
 }
 
 void Engine::renderOutro(int index) {
@@ -832,14 +877,26 @@ void Engine::flushPendingActors() {
 }
 
 void Engine::DestroyActor(Actor *actor) {
-    for (auto &kv : actor->getComponentsMap()) {
-        auto &inst      = *kv.second;
-        inst["enabled"] = false;
+    if (actor == nullptr || actor->isDestroyed()) {
+        return;
     }
+
+    std::vector<std::string> component_keys;
+    component_keys.reserve(actor->getComponentsMap().size());
+    for (const auto &kv : actor->getComponentsMap()) {
+        component_keys.push_back(kv.first);
+    }
+
+    for (const auto &key : component_keys) {
+        ComponentManager::scheduleComponentRemoval(actor, key);
+    }
+
     actor->markDestroyed();
 
     // 2) schedule the actor itself for removal
-    pendingActorDestroys.push_back(actor);
+    if (std::find(pendingActorDestroys.begin(), pendingActorDestroys.end(), actor) == pendingActorDestroys.end()) {
+        pendingActorDestroys.push_back(actor);
+    }
 }
 
 void Engine::LoadScene(const std::string &sceneName) {

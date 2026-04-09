@@ -159,16 +159,12 @@ void Actor::removeComponentByKey(const std::string &key) {
 }
 
 luabridge::LuaRef Actor::AddComponent(std::string type_name) {
-    lua_State *L             = ComponentManager::getLuaState();
-    auto       baseComponent = ComponentManager::GetComponent(type_name);
-    if (!baseComponent) {
+    lua_State *L = ComponentManager::getLuaState();
+
+    luabridge::LuaRef inst = ComponentManager::InstantiateComponent(type_name);
+    if (inst.isNil()) {
         return luabridge::LuaRef(L);
     }
-
-    // 1) new Lua table
-    luabridge::LuaRef inst = luabridge::newTable(L); //
-    ComponentManager::EstablishInheritance(
-        inst, *baseComponent);
 
     // 2) set built-ins.
     inst["type"]       = type_name;
@@ -238,10 +234,6 @@ void Actor::RemoveComponent(const luabridge::LuaRef &component) {
     // grab its key
     std::string key = component["key"].cast<std::string>();
 
-    // disable right away so Update/LateUpdate skip it
-    component["enabled"] = false;
-    removeComponentByKey(key);
-
-    // ask ComponentManager to erase it when safe
+    // ask ComponentManager to run OnDestroy and erase it after LateUpdate.
     ComponentManager::scheduleComponentRemoval(this, key);
 }

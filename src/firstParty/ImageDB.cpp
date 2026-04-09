@@ -187,6 +187,22 @@ void ImageDB::DrawUIEx(const std::string &imageName,
                               static_cast<int>(sortingOrder));
 }
 
+void ImageDB::DrawPixel(float x,
+                        float y,
+                        float r,
+                        float g,
+                        float b,
+                        float a) {
+    PixelDrawRequest request;
+    request.x = static_cast<int>(x);
+    request.y = static_cast<int>(y);
+    request.r = clampByte(static_cast<int>(r));
+    request.g = clampByte(static_cast<int>(g));
+    request.b = clampByte(static_cast<int>(b));
+    request.a = clampByte(static_cast<int>(a));
+    pixelDrawQueue.push_back(request);
+}
+
 void ImageDB::RenderAndClearAllImages() {
     std::stable_sort(imageDrawQueue.begin(), imageDrawQueue.end(), compare_image_requests);
 
@@ -233,4 +249,18 @@ void ImageDB::RenderAndClearAllImages() {
 
     SDL_RenderSetScale(Renderer::getRenderer(), 1.0f, 1.0f);
     imageDrawQueue.clear();
+}
+
+void ImageDB::RenderAndClearAllPixels() {
+    SDL_Renderer *renderer = Renderer::getRenderer();
+    for (const auto &request : pixelDrawQueue) {
+        SDL_SetRenderDrawColor(renderer,
+                               static_cast<Uint8>(request.r),
+                               static_cast<Uint8>(request.g),
+                               static_cast<Uint8>(request.b),
+                               static_cast<Uint8>(request.a));
+        SDL_RenderDrawPoint(renderer, request.x, request.y);
+    }
+
+    pixelDrawQueue.clear();
 }

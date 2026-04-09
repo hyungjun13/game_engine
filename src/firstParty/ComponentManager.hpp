@@ -2,9 +2,12 @@
 
 #include "lua.hpp"
 #include <algorithm>
+#include <cstdint>
 #include <memory>
 #include <queue>
 #include <string>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "Actor.hpp"
@@ -30,6 +33,24 @@ struct PendingComponent {
     luabridge::LuaRef instance;
 };
 
+struct EventSubscription {
+    luabridge::LuaRef component;
+    luabridge::LuaRef callback;
+    uint64_t          sequence;
+};
+
+enum class PendingEventOpType {
+    Subscribe,
+    Unsubscribe
+};
+
+struct PendingEventOp {
+    PendingEventOpType type;
+    std::string        eventType;
+    luabridge::LuaRef  component;
+    luabridge::LuaRef  callback;
+};
+
 class ComponentManager {
   public:
     static void Initialize();
@@ -44,12 +65,18 @@ class ComponentManager {
 
     static void QueueOnLateUpdate(int actorIndex, std::shared_ptr<luabridge::LuaRef> instance);
     static void ProcessOnLateUpdate();
+    static void ProcessOnDestroy();
+    static void ProcessPendingEventSubscriptions();
 
     static int DebugLog(lua_State *L);
 
     static bool IsComponentLoaded(const std::string &componentName);
 
     static std::shared_ptr<luabridge::LuaRef> GetComponent(const std::string &componentName);
+
+    static std::shared_ptr<luabridge::LuaRef> GetOrLoadComponentPrototype(const std::string &componentName);
+
+    static luabridge::LuaRef InstantiateComponent(const std::string &componentName);
 
     static void addComponentToCache(const std::string &componentName, std::shared_ptr<luabridge::LuaRef> component);
 
@@ -77,10 +104,18 @@ class ComponentManager {
 
     static void scheduleComponentRemoval(Actor *actor, std::string key);
 
+    static void EventPublish(const std::string &eventType, const luabridge::LuaRef &eventObject);
+    static void EventSubscribe(const std::string &eventType, const luabridge::LuaRef &component, const luabridge::LuaRef &callback);
+    static void EventUnsubscribe(const std::string &eventType, const luabridge::LuaRef &component, const luabridge::LuaRef &callback);
+
   private:
-    static void InitializeState();
-    static void InitializeFunctions();
-    static void InitializeComponents();
+    static void              InitializeState();
+    static void              InitializeFunctions();
+    static void              InitializeComponents();
+    static bool              IsCppComponentType(const std::string &componentName);
+    static bool              IsLuaComponentType(const std::string &componentName);
+    static luabridge::LuaRef CreateCppComponent(const std::string &componentName);
+    static luabridge::LuaRef CloneCppComponent(const luabridge::LuaRef &baseComponent);
 
     // For each actor (by its loading order index), we store a PQ of its components.
     static inline std::vector<std::priority_queue<ComponentOnStartEntry, std::vector<ComponentOnStartEntry>, ComponentComparator>> onStartQueue;
@@ -92,9 +127,15 @@ class ComponentManager {
 
     static inline std::vector<PendingComponent> pendingAdds;
 
-    static inline std::vector<std::pair<Actor *, std::string>> pendingRemovals;
+    static inline std::vector<PendingComponent>   pendingDestroys;
+    static inline std::unordered_set<std::string> pendingDestroyTokens;
+
+    static inline std::unordered_map<std::string, std::vector<EventSubscription>> eventSubscribers;
+    static inline std::vector<PendingEventOp>                                     pendingEventOps;
+    static inline uint64_t                                                        nextEventSequence = 0;
 
     static void flushPendingRemovals();
+    static void removeEventSubscriptionsForComponent(const luabridge::LuaRef &component);
 
     inline static lua_State *L;
 };

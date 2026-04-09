@@ -29,9 +29,28 @@ find_package(SDL2_mixer CONFIG REQUIRED)    # provides SDL2_mixer::SDL2_mixer
 
 # 3) Collect engine sources
 file(GLOB_RECURSE
-    GAME_ENGINE_SOURCES
+  GAME_ENGINE_SOURCES
+  CONFIGURE_DEPENDS
     src/firstParty/*.cpp
     src/firstParty/*.hpp
+)
+
+# 3b) Build Box2D from vendored source
+file(GLOB_RECURSE BOX2D_SOURCES
+  src/thirdParty/box2d/src/*.cpp
+)
+
+add_library(box2d STATIC ${BOX2D_SOURCES})
+target_include_directories(box2d
+  PUBLIC
+    src/thirdParty/box2d/include
+  PRIVATE
+    src/thirdParty/box2d/src
+)
+set_target_properties(box2d PROPERTIES
+  CXX_STANDARD 11
+  CXX_STANDARD_REQUIRED ON
+  CXX_EXTENSIONS OFF
 )
 
 # 4) Create executable
@@ -60,7 +79,12 @@ if (MSVC)
         $<$<CONFIG:Release>:/W4;/O2>
     )
 else()
-    target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -O3)
+  target_compile_options(${PROJECT_NAME} PRIVATE
+    -Wall
+    -Wextra
+    -O3
+    -Wno-deprecated-declarations
+  )
 endif()
 
 # On macOS ensure we link libc++
@@ -72,6 +96,7 @@ endif()
 # 7) Link everything
 target_link_libraries(${PROJECT_NAME} PRIVATE
     lua                          # your static Lua
+  box2d
     SDL2::SDL2
     SDL2::SDL2main               # alias to SDL2 framework / import target
     SDL2_image::SDL2_image

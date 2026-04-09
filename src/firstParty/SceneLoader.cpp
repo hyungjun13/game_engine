@@ -56,39 +56,20 @@ void SceneLoader::loadActors(std::string scene_path) {
                     exit(0);
                 }
 
-                // Get the Lua state.
-                lua_State *L = ComponentManager::getLuaState();
-
                 if (hasType) {
-                    std::string compType = compObj["type"].GetString();
-                    // Build the Lua file path for the component type.
-                    std::string luaComponentPath = "resources/component_types/" + compType + ".lua";
-                    if (!std::filesystem::exists(luaComponentPath)) {
+                    std::string compType           = compObj["type"].GetString();
+                    auto        componentPrototype = ComponentManager::GetOrLoadComponentPrototype(compType);
+                    if (!componentPrototype) {
                         std::cout << "error: failed to locate component " << compType;
                         exit(0);
                     }
 
-                    // Use the ComponentManager cache: if the base component for compType isn’t loaded yet, load it and cache it.
-                    std::shared_ptr<luabridge::LuaRef> baseComponent;
-                    if (!ComponentManager::IsComponentLoaded(compType)) {
-                        int loadStatus = luaL_dofile(L, luaComponentPath.c_str());
-                        if (loadStatus != LUA_OK) {
-                            std::cout << "problem with lua file " << compType;
-                            exit(0);
-                        }
-                        baseComponent = std::make_shared<luabridge::LuaRef>(luabridge::getGlobal(L, compType.c_str()));
-                        if (!baseComponent->isTable()) {
-                            std::cout << "error: component " << compType << " is not a valid table";
-                            exit(0);
-                        }
-                        ComponentManager::addComponentToCache(compType, baseComponent);
-                    } else {
-                        baseComponent = ComponentManager::GetComponent(compType);
+                    luabridge::LuaRef instance = ComponentManager::InstantiateComponent(compType);
+                    if (instance.isNil()) {
+                        std::cout << "error: failed to instantiate component " << compType;
+                        exit(0);
                     }
 
-                    // Create a new component instance.
-                    luabridge::LuaRef instance = luabridge::newTable(L);
-                    ComponentManager::EstablishInheritance(instance, *baseComponent);
                     instance["key"]        = compKey;
                     instance["type"]       = compType;
                     instance["enabled"]    = true;
