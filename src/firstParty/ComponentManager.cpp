@@ -768,10 +768,6 @@ void ComponentManager::QueueOnUpdate(int actorIndex, std::shared_ptr<luabridge::
         onUpdateQueue.resize(actorIndexU + 1);
     }
     onUpdateQueue[actorIndexU].push_back(instance);
-    std::sort(onUpdateQueue[actorIndexU].begin(), onUpdateQueue[actorIndexU].end(),
-              [](const std::shared_ptr<luabridge::LuaRef> &a, const std::shared_ptr<luabridge::LuaRef> &b) {
-                  return (*a)["key"].cast<std::string>() < (*b)["key"].cast<std::string>();
-              });
 }
 
 void ComponentManager::QueueOnLateUpdate(int actorIndex, std::shared_ptr<luabridge::LuaRef> instance) {
@@ -784,12 +780,14 @@ void ComponentManager::QueueOnLateUpdate(int actorIndex, std::shared_ptr<luabrid
         onLateUpdateQueue.resize(actorIndexU + 1);
     }
     onLateUpdateQueue[actorIndexU].push_back(instance);
-    std::sort(onLateUpdateQueue[actorIndexU].begin(), onLateUpdateQueue[actorIndexU].end(),
-              [](const std::shared_ptr<luabridge::LuaRef> &a, const std::shared_ptr<luabridge::LuaRef> &b) {
-                  return (*a)["key"].cast<std::string>() < (*b)["key"].cast<std::string>();
-              });
 }
 void ComponentManager::ProcessOnUpdate() {
+    auto cmp = [](const std::shared_ptr<luabridge::LuaRef> &a, const std::shared_ptr<luabridge::LuaRef> &b) {
+        return (*a)["key"].cast<std::string>() < (*b)["key"].cast<std::string>();
+    };
+    for (auto &actorQueue : onUpdateQueue) {
+        std::sort(actorQueue.begin(), actorQueue.end(), cmp);
+    }
 
     for (auto &actorQueue : onUpdateQueue) {
         for (auto &instance : actorQueue) {
@@ -811,6 +809,12 @@ void ComponentManager::ProcessOnUpdate() {
 }
 
 void ComponentManager::ProcessOnLateUpdate() {
+    auto cmp = [](const std::shared_ptr<luabridge::LuaRef> &a, const std::shared_ptr<luabridge::LuaRef> &b) {
+        return (*a)["key"].cast<std::string>() < (*b)["key"].cast<std::string>();
+    };
+    for (auto &actorQueue : onLateUpdateQueue) {
+        std::sort(actorQueue.begin(), actorQueue.end(), cmp);
+    }
 
     for (auto &actorQueue : onLateUpdateQueue) {
 

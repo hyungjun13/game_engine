@@ -142,6 +142,4 @@ void SceneLoader::loadActors(std::string scene_path) {
         }
     }
 
-    // after loading all actors, sort the components in the queues in componentmanager by their key
-    ComponentManager::sortQueues();
 }

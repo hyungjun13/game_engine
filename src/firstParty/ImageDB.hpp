@@ -79,9 +79,15 @@ class ImageDB {
     static void loadHUD();
 
   private:
-    inline static std::vector<SDL_Texture *>                     introImageCache;
-    inline static std::array<SDL_Texture *, 2>                   outroImageCache = {nullptr, nullptr}; // [0] = game over, [1] = win
-    inline static std::unordered_map<std::string, SDL_Texture *> imageCache;
-    inline static std::vector<ImageDrawRequest>                  imageDrawQueue;
-    inline static std::vector<PixelDrawRequest>                  pixelDrawQueue;
+    struct CachedTexture {
+        SDL_Texture *tex;
+        int          w;
+        int          h;
+    };
+
+    inline static std::vector<SDL_Texture *>                       introImageCache;
+    inline static std::array<SDL_Texture *, 2>                     outroImageCache = {nullptr, nullptr}; // [0] = game over, [1] = win
+    inline static std::unordered_map<std::string, CachedTexture>   imageCache;
+    inline static std::vector<ImageDrawRequest>                    imageDrawQueue;
+    inline static std::vector<PixelDrawRequest>                    pixelDrawQueue;
 };

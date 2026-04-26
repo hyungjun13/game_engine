@@ -111,7 +111,7 @@ Print error: player actor requires an hp_image be defined
 SDL_Texture *ImageDB::getImage(std::string imageName) {
     auto it = imageCache.find(imageName);
     if (it != imageCache.end()) {
-        return it->second;
+        return it->second.tex;
     }
 
     std::string imagePath = "resources/images/" + imageName + ".png";
@@ -126,7 +126,10 @@ SDL_Texture *ImageDB::getImage(std::string imageName) {
         exit(0);
     }
 
-    imageCache[imageName] = texture;
+    CachedTexture entry;
+    entry.tex = texture;
+    SDL_QueryTexture(texture, nullptr, nullptr, &entry.w, &entry.h);
+    imageCache[imageName] = entry;
     return texture;
 }
 
@@ -206,14 +209,16 @@ void ImageDB::DrawPixel(float x,
 void ImageDB::RenderAndClearAllImages() {
     std::stable_sort(imageDrawQueue.begin(), imageDrawQueue.end(), compare_image_requests);
 
-    float zoomFactor = Engine::getZoomFactor();
+    float     zoomFactor = Engine::getZoomFactor();
+    glm::vec2 camPos     = Engine::getCameraPosition();
+    float     halfW      = Engine::getXResolution() * 0.5f * (1.0f / zoomFactor);
+    float     halfH      = Engine::getYResolution() * 0.5f * (1.0f / zoomFactor);
+
     SDL_RenderSetScale(Renderer::getRenderer(), zoomFactor, zoomFactor);
 
     for (auto &request : imageDrawQueue) {
-        SDL_Texture *tex = getImage(request.image_name);
-
-        SDL_Rect texRect;
-        SDL_QueryTexture(tex, nullptr, nullptr, &texRect.w, &texRect.h);
+        getImage(request.image_name); // ensure loaded into cache
+        const CachedTexture &cached = imageCache[request.image_name];
 
         int flipMode = SDL_FLIP_NONE;
         if (request.scale_x < 0.0f) {
@@ -226,25 +231,23 @@ void ImageDB::RenderAndClearAllImages() {
         float xScale = std::abs(request.scale_x);
         float yScale = std::abs(request.scale_y);
 
-        texRect.w = static_cast<int>(texRect.w * xScale);
-        texRect.h = static_cast<int>(texRect.h * yScale);
+        SDL_Rect texRect;
+        texRect.w = static_cast<int>(cached.w * xScale);
+        texRect.h = static_cast<int>(cached.h * yScale);
 
         SDL_Point pivotPoint = {
             static_cast<int>(request.pivot_x * texRect.w),
             static_cast<int>(request.pivot_y * texRect.h)};
 
-        glm::vec2 finalRenderingPosition = glm::vec2(request.x, request.y) - Engine::getCameraPosition();
+        glm::vec2 finalRenderingPosition = glm::vec2(request.x, request.y) - camPos;
 
-        texRect.x = static_cast<int>(finalRenderingPosition.x * PIXELS_PER_METER + Engine::getXResolution() * 0.5f * (1.0f / zoomFactor) - pivotPoint.x);
-        texRect.y = static_cast<int>(finalRenderingPosition.y * PIXELS_PER_METER + Engine::getYResolution() * 0.5f * (1.0f / zoomFactor) - pivotPoint.y);
+        texRect.x = static_cast<int>(finalRenderingPosition.x * PIXELS_PER_METER + halfW - pivotPoint.x);
+        texRect.y = static_cast<int>(finalRenderingPosition.y * PIXELS_PER_METER + halfH - pivotPoint.y);
 
-        SDL_SetTextureColorMod(tex, static_cast<Uint8>(request.r), static_cast<Uint8>(request.g), static_cast<Uint8>(request.b));
-        SDL_SetTextureAlphaMod(tex, static_cast<Uint8>(request.a));
+        SDL_SetTextureColorMod(cached.tex, static_cast<Uint8>(request.r), static_cast<Uint8>(request.g), static_cast<Uint8>(request.b));
+        SDL_SetTextureAlphaMod(cached.tex, static_cast<Uint8>(request.a));
 
-        SDL_RenderCopyEx(Renderer::getRenderer(), tex, nullptr, &texRect, request.rotation_degrees, &pivotPoint, static_cast<SDL_RendererFlip>(flipMode));
-
-        SDL_SetTextureColorMod(tex, 255, 255, 255);
-        SDL_SetTextureAlphaMod(tex, 255);
+        SDL_RenderCopyEx(Renderer::getRenderer(), cached.tex, nullptr, &texRect, request.rotation_degrees, &pivotPoint, static_cast<SDL_RendererFlip>(flipMode));
     }
 
     SDL_RenderSetScale(Renderer::getRenderer(), 1.0f, 1.0f);

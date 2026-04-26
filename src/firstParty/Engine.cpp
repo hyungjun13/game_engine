@@ -580,9 +580,6 @@ void Engine::renderHUDQueue() {
         } else {
             Helper::SDL_RenderCopy(Renderer::getRenderer(), request.texture, nullptr, &request.dstrect);
         }
-
-        SDL_SetTextureColorMod(request.texture, 255, 255, 255);
-        SDL_SetTextureAlphaMod(request.texture, 255);
     }
     imageDrawQueueHUD.clear();
 }
