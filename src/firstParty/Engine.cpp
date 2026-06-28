@@ -63,8 +63,8 @@ std::unordered_map<std::string, SDL_Texture *> *Engine::getTextureCache() {
     return &textureCache;
 }
 
-std::string Engine::generateTextKey(const std::string &text, int fontSize, const SDL_Color &color) {
-    return text + "_" + std::to_string(fontSize) + "_" +
+std::string Engine::generateTextKey(const std::string &text, int fontSize, const SDL_Color &color, const std::string &fontName) {
+    return text + "_" + fontName + "_" + std::to_string(fontSize) + "_" +
            std::to_string(color.r) + "_" +
            std::to_string(color.g) + "_" +
            std::to_string(color.b) + "_" +
@@ -84,6 +84,7 @@ void queueActorForUpdatesOnly(const std::shared_ptr<Actor> &actor) {
 }
 
 void SyncActorsFromRigidbodies(const std::vector<std::shared_ptr<Actor>> &actors) {
+    if (!Rigidbody::HasWorld()) return;
     for (const auto &actor_sp : actors) {
         Actor *actor = actor_sp.get();
         if (actor == nullptr) {
@@ -454,37 +455,19 @@ void Engine::renderImages() {
 
 void Engine::renderTexts() {
     for (auto &request : textDrawQueue) {
-        TTF_Font *font = nullptr;
-        if (!request.fontName.empty()) {
-            font = TextDB::GetFontByNameSize(request.fontName, request.fontSize);
-        } else {
-            font = TextDB::getFont();
-        }
+        SDL_Texture *texture = getTextTexture(request.text, request.fontSize, request.color, request.fontName);
+        if (!texture) continue;
 
-        if (!font) {
-            continue;
-        }
-
-        SDL_Surface *surface = TTF_RenderText_Solid(font, request.text.c_str(), request.color);
-        if (!surface) {
-            continue;
-        }
-        SDL_Texture *texture = SDL_CreateTextureFromSurface(Renderer::getRenderer(), surface);
-        if (!texture) {
-            SDL_FreeSurface(surface);
-            continue;
-        }
+        float w, h;
+        Helper::SDL_QueryTexture(texture, &w, &h);
 
         SDL_FRect dstrect;
-        dstrect.x = request.x;
-        dstrect.y = request.y;
-        dstrect.w = surface->w;
-        dstrect.h = surface->h;
+        dstrect.x = static_cast<float>(request.x);
+        dstrect.y = static_cast<float>(request.y);
+        dstrect.w = w;
+        dstrect.h = h;
 
-        Helper::SDL_RenderCopy(Renderer::getRenderer(), texture, NULL, &dstrect);
-
-        SDL_FreeSurface(surface);
-        SDL_DestroyTexture(texture);
+        Helper::SDL_RenderCopy(Renderer::getRenderer(), texture, nullptr, &dstrect);
     }
     textDrawQueue.clear();
 
@@ -658,31 +641,24 @@ bool Engine::findActorInVector(std::vector<Actor *> actors, Actor *actor) {
     return false;
 }
 
-// Returns a cached texture if available, otherwise renders and caches it.
-SDL_Texture *Engine::getTextTexture(const std::string &text, int fontSize, const SDL_Color &color) {
-    std::string key = generateTextKey(text, fontSize, color);
+SDL_Texture *Engine::getTextTexture(const std::string &text, int fontSize, const SDL_Color &color, const std::string &fontName) {
+    std::string key = generateTextKey(text, fontSize, color, fontName);
 
     auto it = textTextureCache.find(key);
     if (it != textTextureCache.end()) {
-        return it->second; //
+        return it->second;
     }
 
-    // Not in cache, so render it.
-    TTF_Font    *font    = TextDB::getFont(); // or however you retrieve the appropriate font
+    TTF_Font *font = fontName.empty() ? TextDB::getFont() : TextDB::GetFontByNameSize(fontName, fontSize);
+    if (!font) return nullptr;
+
     SDL_Surface *surface = TTF_RenderText_Solid(font, text.c_str(), color);
-    if (!surface) {
-        std::cout << "Failed to render text surface: " << TTF_GetError() << std::endl;
-        return nullptr;
-    }
+    if (!surface) return nullptr;
+
     SDL_Texture *texture = SDL_CreateTextureFromSurface(Renderer::getRenderer(), surface);
     SDL_FreeSurface(surface);
+    if (!texture) return nullptr;
 
-    if (!texture) {
-        std::cout << "Failed to create text texture: " << SDL_GetError() << std::endl;
-        return nullptr;
-    }
-
-    // Cache the texture
     textTextureCache[key] = texture;
     return texture;
 }
@@ -891,9 +867,7 @@ void Engine::DestroyActor(Actor *actor) {
     actor->markDestroyed();
 
     // 2) schedule the actor itself for removal
-    if (std::find(pendingActorDestroys.begin(), pendingActorDestroys.end(), actor) == pendingActorDestroys.end()) {
-        pendingActorDestroys.push_back(actor);
-    }
+    pendingActorDestroys.insert(actor);
 }
 
 void Engine::LoadScene(const std::string &sceneName) {
@@ -920,14 +894,11 @@ void Engine::flushPendingActorDestroys() {
     if (pendingActorDestroys.empty())
         return;
 
-    // Remove any shared_ptr<Actor> whose raw pointer is in pendingActorDestroys
     auto &live = masterActorList;
     live.erase(
         std::remove_if(live.begin(), live.end(),
                        [&](auto const &ptr) {
-                           return std::find(pendingActorDestroys.begin(),
-                                            pendingActorDestroys.end(),
-                                            ptr.get()) != pendingActorDestroys.end();
+                           return pendingActorDestroys.count(ptr.get()) > 0;
                        }),
         live.end());
 

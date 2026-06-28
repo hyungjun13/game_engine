@@ -22,8 +22,8 @@
 
 #include "SDL2/SDL.h"
 
-#include <deque>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 struct imageDrawRequest {
@@ -125,8 +125,8 @@ class Engine {
     static void  setPlayerSpeed(float speed);
     static float getPlayerSpeed();
 
-    static SDL_Texture *getTextTexture(const std::string &text, int fontSize, const SDL_Color &color);
-    static void         clearTextTextureCache(); // Call this if you need to update text frequently
+    static SDL_Texture *getTextTexture(const std::string &text, int fontSize, const SDL_Color &color, const std::string &fontName = "");
+    static void         clearTextTextureCache();
 
     static void  setCamEaseFactor(float cam_ease_factor);
     static float getCamEaseFactor();
@@ -196,16 +196,16 @@ class Engine {
     inline static int introImgIndex  = 0;
     inline static int introTextIndex = 0;
 
-    inline static std::deque<imageDrawRequest> imageDrawQueue;
-    inline static std::deque<imageDrawRequest> imageDrawQueueHUD;
-    inline static std::vector<textRequest>     textDrawQueue;
-    inline static std::vector<textRequest>     textDrawQueueHUD;
+    inline static std::vector<imageDrawRequest> imageDrawQueue;
+    inline static std::vector<imageDrawRequest> imageDrawQueueHUD;
+    inline static std::vector<textRequest>      textDrawQueue;
+    inline static std::vector<textRequest>      textDrawQueueHUD;
 
     inline static std::unordered_map<std::string, SDL_Texture *> textureCache;
 
     inline static std::unordered_map<std::string, SDL_Texture *> textTextureCache;
 
-    static std::string generateTextKey(const std::string &text, int fontSize, const SDL_Color &color);
+    static std::string generateTextKey(const std::string &text, int fontSize, const SDL_Color &color, const std::string &fontName);
 
     inline static int currentFrame = 0;
 
@@ -218,8 +218,8 @@ class Engine {
     inline static std::vector<std::shared_ptr<Actor>> pendingActorAdds;
     static void                                       flushPendingActors();
 
-    inline static std::vector<Actor *> pendingActorDestroys;
-    static void                        flushPendingActorDestroys();
+    inline static std::unordered_set<Actor *> pendingActorDestroys;
+    static void                               flushPendingActorDestroys();
 
     inline static std::vector<Actor *> renderOrderBuffer;
 };

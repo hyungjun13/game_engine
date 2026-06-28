@@ -8,7 +8,7 @@
 
 // Getters
 int          Actor::getId() const { return id; }
-std::string  Actor::getName() { return name; }
+const std::string &Actor::getName() { return name; }
 SDL_Texture *Actor::getView() { return view; }
 glm::vec2    Actor::getViewSize() { return view_size; }
 glm::vec2    Actor::getPosition() const { return transform_position; }

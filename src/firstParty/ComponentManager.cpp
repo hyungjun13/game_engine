@@ -458,17 +458,7 @@ void ComponentManager::ReportError(const std::string &actor_name, const luabridg
 }
 
 void ComponentManager::sortQueues() {
-    for (auto &vec : onUpdateQueue) {
-        std::sort(vec.begin(), vec.end(), [](const std::shared_ptr<luabridge::LuaRef> &a, const std::shared_ptr<luabridge::LuaRef> &b) {
-            return (*a)["key"].cast<std::string>() < (*b)["key"].cast<std::string>();
-        });
-    }
-
-    for (auto &vec : onLateUpdateQueue) {
-        std::sort(vec.begin(), vec.end(), [](const std::shared_ptr<luabridge::LuaRef> &a, const std::shared_ptr<luabridge::LuaRef> &b) {
-            return (*a)["key"].cast<std::string>() < (*b)["key"].cast<std::string>();
-        });
-    }
+    // Queues are maintained in sorted order at insertion time; nothing to do here.
 }
 
 void ComponentManager::InitializeState() {
@@ -830,11 +820,16 @@ void ComponentManager::QueueOnUpdate(int actorIndex, std::shared_ptr<luabridge::
         return;
     }
     const size_t actorIndexU = static_cast<size_t>(actorIndex);
-    // Resize the vector if necessary.
     if (actorIndexU >= onUpdateQueue.size()) {
         onUpdateQueue.resize(actorIndexU + 1);
     }
-    onUpdateQueue[actorIndexU].push_back(instance);
+    auto &bucket = onUpdateQueue[actorIndexU];
+    const std::string &key = (*instance)["key"].cast<std::string>();
+    auto pos = std::lower_bound(bucket.begin(), bucket.end(), instance,
+        [&key](const std::shared_ptr<luabridge::LuaRef> &a, const std::shared_ptr<luabridge::LuaRef> &) {
+            return (*a)["key"].cast<std::string>() < key;
+        });
+    bucket.insert(pos, instance);
 }
 
 void ComponentManager::QueueOnLateUpdate(int actorIndex, std::shared_ptr<luabridge::LuaRef> instance) {
@@ -842,56 +837,40 @@ void ComponentManager::QueueOnLateUpdate(int actorIndex, std::shared_ptr<luabrid
         return;
     }
     const size_t actorIndexU = static_cast<size_t>(actorIndex);
-    // Resize the vector if necessary.
     if (actorIndexU >= onLateUpdateQueue.size()) {
         onLateUpdateQueue.resize(actorIndexU + 1);
     }
-    onLateUpdateQueue[actorIndexU].push_back(instance);
+    auto &bucket = onLateUpdateQueue[actorIndexU];
+    const std::string &key = (*instance)["key"].cast<std::string>();
+    auto pos = std::lower_bound(bucket.begin(), bucket.end(), instance,
+        [&key](const std::shared_ptr<luabridge::LuaRef> &a, const std::shared_ptr<luabridge::LuaRef> &) {
+            return (*a)["key"].cast<std::string>() < key;
+        });
+    bucket.insert(pos, instance);
 }
-void ComponentManager::ProcessOnUpdate() {
-    auto cmp = [](const std::shared_ptr<luabridge::LuaRef> &a, const std::shared_ptr<luabridge::LuaRef> &b) {
-        return (*a)["key"].cast<std::string>() < (*b)["key"].cast<std::string>();
-    };
-    for (auto &actorQueue : onUpdateQueue) {
-        std::sort(actorQueue.begin(), actorQueue.end(), cmp);
-    }
 
+void ComponentManager::ProcessOnUpdate() {
     for (auto &actorQueue : onUpdateQueue) {
         for (auto &instance : actorQueue) {
             if ((*instance)["enabled"].cast<bool>()) {
-
                 try {
-
                     (*instance)["OnUpdate"](*instance);
-
-                } catch (const luabridge::LuaException &e) { //
-                    // Report the error.
+                } catch (const luabridge::LuaException &e) {
                     luabridge::LuaRef actorRef = (*instance)["actor"];
                     Actor            *a        = actorRef.cast<Actor *>();
                     ReportError(a->getName(), e);
                 }
             }
-        } //
+        }
     }
 }
 
 void ComponentManager::ProcessOnLateUpdate() {
-    auto cmp = [](const std::shared_ptr<luabridge::LuaRef> &a, const std::shared_ptr<luabridge::LuaRef> &b) {
-        return (*a)["key"].cast<std::string>() < (*b)["key"].cast<std::string>();
-    };
     for (auto &actorQueue : onLateUpdateQueue) {
-        std::sort(actorQueue.begin(), actorQueue.end(), cmp);
-    }
-
-    for (auto &actorQueue : onLateUpdateQueue) {
-
         for (auto &instance : actorQueue) {
             if ((*instance)["enabled"].cast<bool>()) {
-
                 try {
-                    // Call onLateUpdate and pass in actor instance as an argument.
                     (*instance)["OnLateUpdate"](*instance);
-
                 } catch (const luabridge::LuaException &e) {
                     luabridge::LuaRef actorRef = (*instance)["actor"];
                     Actor            *a        = actorRef.cast<Actor *>();

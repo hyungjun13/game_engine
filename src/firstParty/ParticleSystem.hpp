@@ -69,7 +69,8 @@ class ParticleSystem {
 
   private:
     // DOD particle arrays (one entry per particle slot)
-    std::vector<bool>  is_active;
+    // uint8_t avoids std::vector<bool>'s bit-packing, giving direct byte loads in the hot loop
+    std::vector<uint8_t> is_active;
     std::vector<int>   start_frame;
     std::vector<float> x_pos;
     std::vector<float> y_pos;

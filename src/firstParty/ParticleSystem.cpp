@@ -36,7 +36,7 @@ void ParticleSystem::GenerateNewParticles(int count) {
             free_list.pop();
         } else {
             slot = number_of_particle_slots++;
-            is_active.push_back(false);
+            is_active.push_back(0);
             start_frame.push_back(0);
             x_pos.push_back(0.0f);
             y_pos.push_back(0.0f);
@@ -60,7 +60,7 @@ void ParticleSystem::GenerateNewParticles(int count) {
         // Emission velocity (same angle as position offset)
         float speed = speed_distribution.Sample();
 
-        is_active[slot]           = true;
+        is_active[slot]           = 1;
         start_frame[slot]         = particle_system_frame_number;
         x_pos[slot]               = x + cos_angle * radius;
         y_pos[slot]               = y + sin_angle * radius;
@@ -90,7 +90,7 @@ void ParticleSystem::OnUpdate() {
         // Lifetime check
         int frames_alive = particle_system_frame_number - start_frame[i];
         if (frames_alive >= duration_frames) {
-            is_active[i] = false;
+            is_active[i] = 0;
             free_list.push(i);
             continue;
         }

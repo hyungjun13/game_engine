@@ -17,7 +17,7 @@ class Actor {
   public:
     // Getters
     int          getId() const;
-    std::string  getName();
+    const std::string &getName();
     SDL_Texture *getView();
     glm::vec2    getViewSize();
     glm::vec2    getPosition() const;
