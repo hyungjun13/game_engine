@@ -44,13 +44,13 @@ The engine was built incrementally across a semester-long project, adding physic
 └────────────────┬──────────────────────────┘
                  │  LuaBridge
 ┌────────────────▼──────────────────────────┐
-│              Lua API Namespaces            │
+│              Lua API Namespaces           │
 │  Actor · Input · Image · Text · Audio     │
 │  Camera · Scene · Physics · Application   │
 └────────────────┬──────────────────────────┘
                  │
 ┌────────────────▼──────────────────────────┐
-│                C++ Engine Core             │
+│                C++ Engine Core            │
 │                                           │
 │  Engine.cpp        – game loop            │
 │  ComponentManager  – script lifecycle     │
