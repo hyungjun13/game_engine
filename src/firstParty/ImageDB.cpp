@@ -254,6 +254,23 @@ void ImageDB::RenderAndClearAllImages() {
     imageDrawQueue.clear();
 }
 
+void ImageDB::CreateDefaultParticleTextureWithName(const std::string &name) {
+    if (imageCache.find(name) != imageCache.end()) return;
+
+    SDL_Surface *surface     = SDL_CreateRGBSurfaceWithFormat(0, 8, 8, 32, SDL_PIXELFORMAT_RGBA8888);
+    Uint32       white_color = SDL_MapRGBA(surface->format, 255, 255, 255, 255);
+    SDL_FillRect(surface, nullptr, white_color);
+
+    SDL_Texture *texture = SDL_CreateTextureFromSurface(Renderer::getRenderer(), surface);
+    SDL_FreeSurface(surface);
+
+    CachedTexture entry;
+    entry.tex = texture;
+    entry.w   = 8;
+    entry.h   = 8;
+    imageCache[name] = entry;
+}
+
 void ImageDB::RenderAndClearAllPixels() {
     SDL_Renderer *renderer = Renderer::getRenderer();
     for (const auto &request : pixelDrawQueue) {

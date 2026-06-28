@@ -3,6 +3,7 @@
 #include "Engine.hpp"
 #include "ImageDB.hpp"
 #include "Input.hpp"
+#include "ParticleSystem.hpp"
 #include "Rigidbody.hpp"
 #include "TextDB.hpp"
 #include "box2d/b2_fixture.h"
@@ -315,7 +316,7 @@ std::shared_ptr<luabridge::LuaRef> ComponentManager::GetComponent(const std::str
 }
 
 bool ComponentManager::IsCppComponentType(const std::string &componentName) {
-    return componentName == "Rigidbody";
+    return componentName == "Rigidbody" || componentName == "ParticleSystem";
 }
 
 bool ComponentManager::IsLuaComponentType(const std::string &componentName) {
@@ -354,6 +355,16 @@ luabridge::LuaRef ComponentManager::CloneCppComponent(const luabridge::LuaRef &b
     if (typeName == "Rigidbody") {
         auto *src = baseComponent.cast<Rigidbody *>();
         auto *dst = clone.cast<Rigidbody *>();
+        if (src == nullptr || dst == nullptr) {
+            return luabridge::LuaRef(L);
+        }
+        *dst = *src;
+        return clone;
+    }
+
+    if (typeName == "ParticleSystem") {
+        auto *src = baseComponent.cast<ParticleSystem *>();
+        auto *dst = clone.cast<ParticleSystem *>();
         if (src == nullptr || dst == nullptr) {
             return luabridge::LuaRef(L);
         }
@@ -577,6 +588,54 @@ void ComponentManager::InitializeFunctions() {
         .endClass();
 
     luabridge::getGlobalNamespace(L)
+        .beginClass<ParticleSystem>("ParticleSystem")
+        .addConstructor<void (*)(void)>()
+        .addFunction("OnStart", &ParticleSystem::OnStart)
+        .addFunction("OnUpdate", &ParticleSystem::OnUpdate)
+        .addFunction("OnDestroy", &ParticleSystem::OnDestroy)
+        .addFunction("Stop", &ParticleSystem::Stop)
+        .addFunction("Play", &ParticleSystem::Play)
+        .addFunction("Burst", &ParticleSystem::Burst)
+        .addData("key", &ParticleSystem::key)
+        .addData("type", &ParticleSystem::type)
+        .addData("enabled", &ParticleSystem::enabled)
+        .addData("hasStarted", &ParticleSystem::hasStarted)
+        .addData("actor", &ParticleSystem::actor)
+        .addData("x", &ParticleSystem::x)
+        .addData("y", &ParticleSystem::y)
+        .addData("frames_between_bursts", &ParticleSystem::frames_between_bursts)
+        .addData("burst_quantity", &ParticleSystem::burst_quantity)
+        .addData("start_scale_min", &ParticleSystem::start_scale_min)
+        .addData("start_scale_max", &ParticleSystem::start_scale_max)
+        .addData("rotation_min", &ParticleSystem::rotation_min)
+        .addData("rotation_max", &ParticleSystem::rotation_max)
+        .addData("start_color_r", &ParticleSystem::start_color_r)
+        .addData("start_color_g", &ParticleSystem::start_color_g)
+        .addData("start_color_b", &ParticleSystem::start_color_b)
+        .addData("start_color_a", &ParticleSystem::start_color_a)
+        .addData("emit_radius_min", &ParticleSystem::emit_radius_min)
+        .addData("emit_radius_max", &ParticleSystem::emit_radius_max)
+        .addData("emit_angle_min", &ParticleSystem::emit_angle_min)
+        .addData("emit_angle_max", &ParticleSystem::emit_angle_max)
+        .addData("image", &ParticleSystem::image)
+        .addData("sorting_order", &ParticleSystem::sorting_order)
+        .addData("duration_frames", &ParticleSystem::duration_frames)
+        .addData("start_speed_min", &ParticleSystem::start_speed_min)
+        .addData("start_speed_max", &ParticleSystem::start_speed_max)
+        .addData("rotation_speed_min", &ParticleSystem::rotation_speed_min)
+        .addData("rotation_speed_max", &ParticleSystem::rotation_speed_max)
+        .addData("gravity_scale_x", &ParticleSystem::gravity_scale_x)
+        .addData("gravity_scale_y", &ParticleSystem::gravity_scale_y)
+        .addData("drag_factor", &ParticleSystem::drag_factor)
+        .addData("angular_drag_factor", &ParticleSystem::angular_drag_factor)
+        .addData("end_scale", &ParticleSystem::end_scale)
+        .addData("end_color_r", &ParticleSystem::end_color_r)
+        .addData("end_color_g", &ParticleSystem::end_color_g)
+        .addData("end_color_b", &ParticleSystem::end_color_b)
+        .addData("end_color_a", &ParticleSystem::end_color_a)
+        .endClass();
+
+    luabridge::getGlobalNamespace(L)
         .beginNamespace("Actor")
         .addFunction("Find", &Engine::Find)
         .addFunction("FindAll", &Engine::FindAll)
@@ -676,6 +735,14 @@ void ComponentManager::InitializeComponents() {
             exit(0);
         }
         loadedComponentCache["Rigidbody"] = std::make_shared<luabridge::LuaRef>(rigidbody);
+    }
+    {
+        luabridge::LuaRef ps = CreateCppComponent("ParticleSystem");
+        if (ps.isNil()) {
+            std::cout << "error: failed to construct native component ParticleSystem";
+            exit(0);
+        }
+        loadedComponentCache["ParticleSystem"] = std::make_shared<luabridge::LuaRef>(ps);
     }
 
     if (std::filesystem::exists(componentDir)) {

@@ -71,6 +71,7 @@ class ImageDB {
                                   float a);
     static void         RenderAndClearAllImages();
     static void         RenderAndClearAllPixels();
+    static void         CreateDefaultParticleTextureWithName(const std::string &name);
 
     static std::vector<SDL_Texture *> &getIntroImageCache();
 
